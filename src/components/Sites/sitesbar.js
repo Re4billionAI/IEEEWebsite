@@ -92,7 +92,7 @@ Cookies.set("siteId", JSON.stringify(data.siteId));
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-indigo-200/30">
-        <button className="px-4 py-1 bg-indigo-500 rounded-full text-white text-lg font-bold hover:bg-indigo-600 transition-colors">
+        <button className="px-4 py-1 bg-indigo-500  text-white text-lg font-bold hover:bg-indigo-600 transition-colors">
           sites
         </button>
         <button
@@ -112,7 +112,7 @@ Cookies.set("siteId", JSON.stringify(data.siteId));
             placeholder="Search sites..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 bg-indigo-600 text-white placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-colors"
+            className="w-full pl-10 pr-4 py-2  border border-gray-300 bg-indigo-600 text-white placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-colors"
           />
         </div>
 
@@ -126,7 +126,7 @@ Cookies.set("siteId", JSON.stringify(data.siteId));
                 changeLocation(data);
                 
               }}
-              className={`px-4 py-2 mr-2 rounded-lg cursor-pointer transition-colors  text-sm ${
+              className={`px-4 py-2 mr-2  cursor-pointer transition-colors  text-sm ${
                 selectedLocation.name === data.name
                   ? "bg-white text-gray-700"
                   : "bg-indigo-500 hover:bg-indigo-900 text-white"

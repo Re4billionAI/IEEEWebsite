@@ -473,34 +473,54 @@ const additionalData = [
     "siteId": "GhayGotha-MH-48V-rmsv31_002"
   },
   {
-    "name": "Testing-01-testing 1",
+    "name": "Testing-01",
     "path": "rmsv36_012",
     "board": "rmsv36_012",
     "type": "testing 1",
     "geocode": [12.96227, 80.257758],
     "timeInterval": 1,
     "capacity": 1,
-    "siteId": "Testing-01-testing 1-rmsv36_012"
+    "siteId": "Testing-01-rmsv36_012"
   },
   {
-    "name": "Testing-02-testing 2",
+    "name": "Testing-02",
     "path": "rmsv36_020",
     "board": "rmsv36_020",
     "type": "testing 2",
     "geocode": [12.96227, 80.257758],
     "timeInterval": 1,
     "capacity": 1,
-    "siteId": "Testing-02-testing 2-rmsv36_020"
+    "siteId": "Testing-02-rmsv36_020"
   },
   {
-    "name": "Testing-03-testing 3",
+    "name": "Testing-03",
     "path": "rmsv36_004",
     "board": "rmsv36_004 ",
     "type": "testing 3",
     "geocode": [12.96227, 80.257758],
     "timeInterval": 1,
     "capacity": 1,
-    "siteId": "Testing-03-testing 3-rmsv36_004"
+    "siteId": "Testing-03-rmsv36_004"
+  },
+   {
+    "name": "Testing-24v",
+    "path": "Testing-24v",
+    "board": "rmsv36_004",
+    "type": "testing 4",
+    "geocode": [12.96227, 80.257758],
+    "timeInterval": 1,
+    "capacity": 1,
+    "siteId": "Testing-24v"
+  },
+   {
+    "name": "Testing-48v",
+    "path": "Testing-48v",
+    "board": "rmsv36_004",
+    "type": "testing 5",
+    "geocode": [12.96227, 80.257758],
+    "timeInterval": 1,
+    "capacity": 1,
+    "siteId": "Testing-48v"
   }
 ];
 

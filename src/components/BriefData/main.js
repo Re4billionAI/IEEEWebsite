@@ -693,7 +693,7 @@ export default function BrieData({ handlePageChange }) {
                       )}
                     </th>
                     <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 tracking-wider w-1/8">
-  Solar PV Capacity(kWp)
+  Connected Capacity(kWp)
 </th>
                     <th 
                       className="px-3 py-3 text-center text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 w-1/8"

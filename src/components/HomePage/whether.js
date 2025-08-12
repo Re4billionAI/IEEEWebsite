@@ -52,7 +52,7 @@ const WeatherInfo = ({ lat = 12.96227, lon = 80.25775 }) => {
   const Icon = isRain ? CloudRain : Sun;
 
   return (
-   <div className="p-3.5 w-full sm:w-[40%] bg-white flex items-center justify-between  border-[1px] border-gray-300">
+<div className="flex items-center gap-2 bg-white  rounded">
  
       <div className="flex flex-col items-center justify-between ">
         <div className="flex items-center gap-4">
@@ -106,7 +106,7 @@ const WeatherInfo = ({ lat = 12.96227, lon = 80.25775 }) => {
 };
 
 const InfoBox = ({ icon, label, value }) => (
-  <div className="flex items-center gap-2 bg-white  border border-gray-200shadow p-3">
+  <div className="flex items-center gap-2 bg-white  border border-gray-200shadow p-2">
     {icon}
     <div>
       <div className="text-xs text-gray-500">{label}</div>

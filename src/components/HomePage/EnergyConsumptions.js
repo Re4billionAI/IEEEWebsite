@@ -36,7 +36,7 @@ const EnergyConsumption = ({ generation }) => {
   );
 
   return (
-    <div className="flex flex-col p-2 pb-6 md:p-4 md:mb-4 mb-2 mx-4 md:mx-0 bg-white shadow-md rounded-2xl md:rounded-3xl gap-3">
+    <div className="flex flex-col mt-4 p-2 pb-6 md:p-4 md:mb-4 mb-2 mx-4 md:mx-0 bg-white shadow-md rounded-2xl md:rounded-3xl gap-3">
       <h1 className="text-xl md:text-xl font-bold">Energy Consumptions</h1>
       
       <div className="flex flex-row sm:flex-row sm:items-center sm:justify-between md:gap-1 w-auto gap-2 px-2 sm:gap-4 sm:w-full">

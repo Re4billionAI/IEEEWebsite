@@ -1,3 +1,5 @@
+
+
 import { useRef, useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
@@ -259,13 +261,13 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between p-4 pt-0 mb-4 gap-4 w-full">
+    <div className="flex flex-col sm:flex-row items-center justify-between  h-auto   gap-4 w-full">
       <div className="flex flex-col sm:flex-row bg-white border-[1px] border-gray-300 shadow-sm overflow-hidden w-[70%]">
         {/* Image Section */}
         <img
           src={panels}
           alt="Cooling System"
-          className="w-full sm:w-48 h-48 sm:h-auto object-cover object-center"
+          className="w-full sm:w-60 h-60 sm:h-auto object-cover object-center"
         />
 
         {/* Content Section */}
@@ -285,7 +287,7 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
             <div className="flex items-center gap-2 text-sm text-blue-600 font-medium">
               <Thermometer className="w-4 h-4" />
-              Solar PV Capacity: {capacity} kWp
+              Connected Capacity: {capacity} kWp
             </div>
 
             <div className="flex gap-3 items-center w-full sm:w-auto">
@@ -324,7 +326,9 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
       </div>
 
       {/* Weather Info */}
-     <WeatherInfo lat={devicelocation.geocode[0]} lon={devicelocation.geocode[1]} />
+    <div className="flex flex-col items-center justify-between w-full sm:w-[50%] p-5 bg-white border-[1px] border-gray-300 shadow-sm">
+       <WeatherInfo lat={devicelocation.geocode[0]} lon={devicelocation.geocode[1]} />
+    </div>
     </div>
   );
 };
