@@ -474,13 +474,13 @@ const additionalData = [
   },
    {
     "name": "Salipeta_AP-48V",
-    "path": "Salipeta_AP",
+    "path": "Salipeta-AP",
     "board": "rmsv31_002",
     "type": "48v",
     "geocode": [19.523652, 73.012513],
     "timeInterval": 5,
     "capacity": 3.27,
-    "siteId": "Salipeta_AP"
+    "siteId": "Salipeta-AP"
   },
   {
     "name": "Testing-01",
