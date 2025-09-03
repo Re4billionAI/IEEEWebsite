@@ -472,6 +472,16 @@ const additionalData = [
     "capacity": 3.27,
     "siteId": "GhayGotha-MH-48V-rmsv31_002"
   },
+   {
+    "name": "Salipeta_AP-48V",
+    "path": "Salipeta_AP",
+    "board": "rmsv31_002",
+    "type": "48v",
+    "geocode": [19.523652, 73.012513],
+    "timeInterval": 5,
+    "capacity": 3.27,
+    "siteId": "Salipeta_AP"
+  },
   {
     "name": "Testing-01",
     "path": "rmsv36_012",
@@ -511,6 +521,15 @@ const additionalData = [
     "timeInterval": 1,
     "capacity": 1,
     "siteId": "Testing-24v"
+  }, {
+    "name": "Testing2-24v",
+    "path": "Testing02-24v",
+    "board": "rmsv36_004",
+    "type": "testing 4",
+    "geocode": [12.96227, 80.257758],
+    "timeInterval": 1,
+    "capacity": 1,
+    "siteId": "Testing2-24v"
   },
    {
     "name": "Testing-48v",
@@ -521,6 +540,15 @@ const additionalData = [
     "timeInterval": 1,
     "capacity": 1,
     "siteId": "Testing-48v"
+  },   {
+    "name": "Testing2-48v",
+    "path": "Testing02-48v",
+    "board": "rmsv36_004",
+    "type": "testing 5",
+    "geocode": [12.96227, 80.257758],
+    "timeInterval": 1,
+    "capacity": 1,
+    "siteId": "Testing2-48v"
   }
 ];
 
