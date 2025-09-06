@@ -473,7 +473,7 @@ const additionalData = [
     "siteId": "GhayGotha-MH-48V-rmsv31_002"
   },
    {
-    "name": "Salipeta_AP-48V",
+    "name": "Salipeta-AP-48V",
     "path": "Salipeta-AP",
     "board": "rmsv31_002",
     "type": "48v",
@@ -481,6 +481,16 @@ const additionalData = [
     "timeInterval": 5,
     "capacity": 3.27,
     "siteId": "Salipeta-AP"
+  },
+     {
+    "name": "Pullur-AP-48V",
+    "path": "Pullur-AP",
+    "board": "rmsv31_002",
+    "type": "48v",
+    "geocode": [19.523652, 73.012513],
+    "timeInterval": 5,
+    "capacity": 3.27,
+    "siteId": "Pullur-AP"
   },
   {
     "name": "Testing-01",
