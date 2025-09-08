@@ -475,7 +475,7 @@ const additionalData = [
    {
     "name": "Salipeta-AP-48V",
     "path": "Salipeta-AP",
-    "board": "rmsv31_002",
+    "board": "RMSV32_001",
     "type": "48v",
     "geocode": [14.383624, 80.119079],
     "timeInterval": 5,
@@ -485,12 +485,21 @@ const additionalData = [
      {
     "name": "Pullur-AP-48V",
     "path": "Pullur-AP",
-    "board": "rmsv31_002",
+    "board": "RMSV32_002",
     "type": "48v",
       "geocode": [13.243932, 79.33514],
     "timeInterval": 5,
     "capacity": 2,
     "siteId": "Pullur-AP"
+  }, {
+    "name": "Gajula-Dinne-AP-48V",
+    "path": "Gajula-Dinne-AP",
+    "board": "rmsv32_003",
+    "type": "48v",
+      "geocode": [13.243932, 79.33514],
+    "timeInterval": 5,
+    "capacity": 2,
+    "siteId": "Gajula-Dinne-AP"
   },
   {
     "name": "Testing-01",
