@@ -477,9 +477,9 @@ const additionalData = [
     "path": "Salipeta-AP",
     "board": "rmsv31_002",
     "type": "48v",
-    "geocode": [19.523652, 73.012513],
+    "geocode": [14.383624, 80.119079],
     "timeInterval": 5,
-    "capacity": 3.27,
+    "capacity": 2.1,
     "siteId": "Salipeta-AP"
   },
      {
@@ -487,9 +487,9 @@ const additionalData = [
     "path": "Pullur-AP",
     "board": "rmsv31_002",
     "type": "48v",
-    "geocode": [19.523652, 73.012513],
+      "geocode": [13.243932, 79.33514],
     "timeInterval": 5,
-    "capacity": 3.27,
+    "capacity": 2,
     "siteId": "Pullur-AP"
   },
   {
