@@ -15,14 +15,14 @@ const WeatherInfo = ({ lat = 12.96227, lon = 80.25775 }) => {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const apiKey = "fce91158cf3de2349767f631b374d20a";
+ const API_URL =`${process.env.REACT_APP_WHETHER_API_KEY}`
+ 
 
   useEffect(() => {
     const fetchWeather = async () => {
       try {
         const response = await axios.get(
-          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_URL}`
         );
         setWeather(response.data);
         setLoading(false);
@@ -71,32 +71,32 @@ const WeatherInfo = ({ lat = 12.96227, lon = 80.25775 }) => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4  text-sm">
         <InfoBox
-          icon={<Thermometer className="text-red-500" size={20} />}
+          icon={<Thermometer className="text-black" size={20} />}
           label={`Feels like`}
           value={`${weather.main.feels_like}°C`}
         />
         <InfoBox
-          icon={<Droplets className="text-blue-600" size={20} />}
+          icon={<Droplets className="text-black" size={20} />}
           label="Humidity"
           value={`${weather.main.humidity}%`}
         />
         <InfoBox
-          icon={<Wind className="text-green-600" size={20} />}
+          icon={<Wind className="text-black" size={20} />}
           label="Wind"
           value={`${weather.wind.speed} m/s`}
         />
         <InfoBox
-          icon={<Gauge className="text-gray-700" size={20} />}
+          icon={<Gauge className="text-black" size={20} />}
           label="Pressure"
           value={`${weather.main.pressure} hPa`}
         />
         <InfoBox
-          icon={<Cloud className="text-indigo-500" size={20} />}
+          icon={<Cloud className="text-black" size={20} />}
           label="Cloudiness"
           value={`${weather.clouds.all}%`}
         />
         <InfoBox
-          icon={<Sun className="text-orange-500" size={20} />}
+          icon={<Sun className="text-black" size={20} />}
           label="Sunrise"
           value={new Date(weather.sys.sunrise * 1000).toLocaleTimeString()}
         />

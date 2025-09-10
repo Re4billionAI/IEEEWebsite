@@ -8,7 +8,7 @@ import StatusCard from './statusCard';
 import EnergyConsumption from './EnergyConsumptions';
 import Graph from './graphs';
 import { Home, BarChart2, Info } from 'lucide-react'; // or your preferred icon library
-
+import HistoricalPage from './hisrtoricalData';
 import ParameterRepresentation from './parameter';
 
 import SiteDetails from '../InstallationForm/siteInfo.js';
@@ -191,8 +191,10 @@ const HomePage = ({ handlePageChange }) => {
                   updatedEngergies={updatedEnergies}
                   capacity={getDeviceCapacity()}
                 />
-                <EnergyConsumption generation={energies} />
-                <ParameterRepresentation parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
+                {/* <EnergyConsumption generation={energies} /> */}
+               
+                 <HistoricalPage generation={energies} parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
+                  <ParameterRepresentation parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
               </div>
             )}
 

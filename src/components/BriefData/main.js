@@ -463,7 +463,7 @@ export default function BrieData({ handlePageChange }) {
           </div>
         </div>
       ) : (
-        <div className="container mx-auto px-4 py-8">
+        <div className=" px-8 py-8">
           <header className="mb-8">
             <div className="flex justify-between items-center flex-wrap gap-4">
               <div>
@@ -505,7 +505,7 @@ export default function BrieData({ handlePageChange }) {
                   <DatePicker
                     selected={selectedDate}
                     onChange={(date) => setSelectedDate(date)}
-                    className="pl-5 pr-4 py-2 border border-gray-500 rounded-lg text-gray-700 w-32"
+                    className="pl-5 pr-4 py-2 border border-gray-500  text-gray-700 w-32"
                     dateFormat="yyyy-MM-dd"
                     placeholderText="Select date"
                     maxDate={new Date()} // Prevent future dates
@@ -539,9 +539,9 @@ export default function BrieData({ handlePageChange }) {
 
           {/* Dashboard Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500 relative group" title="Total number of monitored solar sites">
+            <div className="bg-white p-6  shadow-md border-l-4 border-blue-500 relative group" title="Total number of monitored solar sites">
               <div className="flex items-center">
-                <div className="bg-blue-100 p-3 rounded-full mr-4">
+                <div className="bg-blue-100 p-3  mr-4">
                   <Activity className="text-blue-500" size={24} />
                 </div>
                 <div>
@@ -550,9 +550,9 @@ export default function BrieData({ handlePageChange }) {
                 </div>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500 relative group" title="Total solar energy generated (kWh)">
+            <div className="bg-white p-6  shadow-md border-l-4 border-green-500 relative group" title="Total solar energy generated (kWh)">
               <div className="flex items-center">
-                <div className="bg-green-100 p-3 rounded-full mr-4">
+                <div className="bg-green-100 p-3  mr-4">
                   <Sun className="text-green-500" size={24} />
                 </div>
                 <div>
@@ -561,9 +561,9 @@ export default function BrieData({ handlePageChange }) {
                 </div>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-red-500 relative group" title="Total grid energy consumed (kWh)">
+            <div className="bg-white p-6  shadow-md border-l-4 border-red-500 relative group" title="Total grid energy consumed (kWh)">
               <div className="flex items-center">
-                <div className="bg-red-100 p-3 rounded-full mr-4">
+                <div className="bg-red-100 p-3  mr-4">
                   <Power className="text-red-500" size={24} />
                 </div>
                 <div>
@@ -572,9 +572,9 @@ export default function BrieData({ handlePageChange }) {
                 </div>
               </div>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500 relative group" title="Total inverter energy output (kWh)">
+            <div className="bg-white p-6  shadow-md border-l-4 border-purple-500 relative group" title="Total inverter energy output (kWh)">
               <div className="flex items-center">
-                <div className="bg-purple-100 p-3 rounded-full mr-4">
+                <div className="bg-purple-100 p-3  mr-4">
                   <Zap className="text-purple-500" size={24} />
                 </div>
                 <div>
@@ -586,7 +586,7 @@ export default function BrieData({ handlePageChange }) {
           </div>
 
           {/* Site Data Table */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+          <div className="bg-white  shadow-md overflow-hidden mb-8">
             <div className="p-6 border-b">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h2 className="text-xl font-bold">Site Data</h2>
@@ -594,7 +594,7 @@ export default function BrieData({ handlePageChange }) {
                   {/* Voltage Filter Buttons and Search Input */}
                   <button
                     onClick={() => setVoltageFilter('all')}
-                    className={`px-4 py-2 rounded-lg flex items-center ${
+                    className={`px-4 py-2  flex items-center ${
                       voltageFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
@@ -602,7 +602,7 @@ export default function BrieData({ handlePageChange }) {
                   </button>
                   <button
                     onClick={() => setVoltageFilter('24v')}
-                    className={`px-4 py-2 rounded-lg flex items-center ${
+                    className={`px-4 py-2  flex items-center ${
                       voltageFilter === '24v' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
@@ -611,7 +611,7 @@ export default function BrieData({ handlePageChange }) {
                   </button>
                   <button
                     onClick={() => setVoltageFilter('48v')}
-                    className={`px-4 py-2 rounded-lg flex items-center ${
+                    className={`px-4 py-2  flex items-center ${
                       voltageFilter === '48v' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
@@ -622,7 +622,7 @@ export default function BrieData({ handlePageChange }) {
                     <input
                       type="text"
                       placeholder="Search sites..."
-                      className="pl-10 pr-4 py-2 text-gray-500 border border-gray-500 rounded-lg w-48"
+                      className="pl-10 pr-4 py-2 text-gray-500 border border-gray-500  w-48"
                       onChange={handleSearchChange}
                       defaultValue={searchTerm}
                     />
@@ -782,12 +782,12 @@ export default function BrieData({ handlePageChange }) {
                             {site.latestValues?.tValue ? formatDate(site.latestValues.tValue * 1000) : 'N/A'}
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap text-sm">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}`}>
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold  ${statusColor}`}>
                               {status}
                             </span>
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap text-sm">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold  ${
                               voltageCategory === '24v' ? 'bg-orange-100 text-orange-800' :
                               voltageCategory === '48v' ? 'bg-indigo-100 text-indigo-800' :
                               'bg-gray-100 text-gray-800'

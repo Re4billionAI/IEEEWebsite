@@ -31,12 +31,12 @@ const Alerts = () => {
       year: 'numeric' 
     });
   };
-
+ const API_URL =`${process.env.REACT_APP_HOST}/admin/alerts`
   const fetchData = async () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        'https://firebackend-3rfxz6qabq-uc.a.run.app/admin/alerts',
+        API_URL,
         { date: formatDateToDDMMYYYY(date) }
       );
       const alerts = response.data?.alerts || [];

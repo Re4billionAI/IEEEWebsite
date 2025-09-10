@@ -19,17 +19,14 @@ import {
 
 const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedEngergies }) => {
   const devicelocation = useSelector((state) => state.location.device);
+  console.log("Device Location:", devicelocation);
   const [date, setDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false); // Added loading state
   const lasttime = new Date(lastupdate * 1000);
   const dateInputRef = useRef(null);
   const timeDelta = devicelocation?.timeInterval; // Fallback to 1 if undefined
 
-  const handleIconClick = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker();
-    }
-  };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -86,6 +83,8 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
           throw new Error("Invalid API response: dataCharts is not an array");
         }
 
+       
+
         const newDataArray = dataCharts.map((chart) => ({
           time: chart.ccAxisXValue || "Unknown",
           solarVoltage: `${chart.SolarVoltage || 0}`,
@@ -100,6 +99,9 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
           batteryVoltage2: `${chart.BatteryVoltage2 || 0}`,
           batteryVoltage3: `${chart.BatteryVoltage3 || 0}`,
           batteryVoltage4: `${chart.BatteryVoltage4 || 0}`,
+          BatteryChrgCurrent:`${chart.BatteryChrgCurrent || 0}`,
+          BatteryDisCurrent:`${chart.BatteryDisCurrent || 0}`
+
         }));
         console.log("Fetched data:", newDataArray);
         return { newDataArray };
@@ -122,7 +124,7 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
         console.warn("No data fetched for the selected date");
         throw new Error("No data available for the selected date.");
       }
-
+ console.log({"newDataArray":newDataArray})
       // Validate and transform data
       const data = newDataArray.map((item) => {
         const row = {
@@ -149,13 +151,17 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
           "BV3 Unit": "V",
           "Battery Voltage 4": parseFloat(item.batteryVoltage4) || 0,
           "BV4 Unit": "V",
+           "BatteryChrgCurrent": parseFloat(item.BatteryChrgCurrent) || 0,
+          "BCHC Unit": "A",
+           "BatteryDisCurrent": parseFloat(item.BatteryDisCurrent) || 0,
+          "BDSC Unit": "A",
         };
 
         // Validate numeric fields
         const numericFields = [
           "Solar Voltage", "Solar Current", "Inverter Voltage", "Inverter Current",
           "Grid Voltage", "Grid Current", "Battery Current",
-          "Battery Voltage 1", "Battery Voltage 2", "Battery Voltage 3", "Battery Voltage 4"
+          "Battery Voltage 1", "Battery Voltage 2", "Battery Voltage 3", "Battery Voltage 4","BatteryChrgCurrent","BatteryDisCurrent"
         ];
         numericFields.forEach((field) => {
           if (isNaN(row[field])) {
