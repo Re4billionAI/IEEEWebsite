@@ -188,8 +188,8 @@ const useApiData = () => {
 
 // Optional “Refresh Data” trigger
 const triggerServerRecompute = async (device) => {
-   const url =`${process.env.REACT_APP_HISTORY_URL}/SingleSiteHistoricalData`
-   console.log({url})
+  const url =`${process.env.REACT_APP_HISTORY_URL}/SingleSiteHistoricalData`
+
  
 // const url = "http://127.0.0.1:5001/rmstesting-d5aa6/us-central1/SingleSiteHistoricalData";
   const payload = {
@@ -235,26 +235,15 @@ const EmptyState = ({ onRefresh }) => (
     </div>
     {onRefresh && (
       <div className="mt-3">
-        <button onClick={onRefresh} className="px-4 py-2 border hover:bg-yellow-100">Refresh Data</button>
+        <div className="text-sm mt-1">If you recently installed the device, the page reload will auto-recompute.</div>
       </div>
     )}
   </div>
 );
 
-const DataHeader = ({ loading, error, lastProcessedTs, device, onRefresh, empty }) => {
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    if (!device) return;
-    try {
-      setRefreshing(true);
-      await triggerServerRecompute(device);
-      await onRefresh();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setRefreshing(false);
-    }
-  };
+const DataHeader = ({ loading, error, lastProcessedTs, device,  empty }) => {
+ 
+ 
   const statusText =
     loading ? "Loading data..." :
     error   ? `Error occurred` :
@@ -270,24 +259,15 @@ const DataHeader = ({ loading, error, lastProcessedTs, device, onRefresh, empty 
             {statusText}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            className="px-6 py-3 text-black hover:bg-gray-200 border font-medium flex items-center gap-2"
-            disabled={loading || refreshing}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading || refreshing ? "animate-spin" : ""}`} />
-            {refreshing ? "Refreshing..." : "Refresh Data"}
-          </button>
-        </div>
+      
       </div>
-      {error && <div className="mt-3"><ErrorBanner message={error} onRetry={onRefresh} /></div>}
-      {(!error && empty) && <div className="mt-3"><EmptyState onRefresh={handleRefresh} /></div>}
+     {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
+     {(!error && empty) && <div className="mt-3"><EmptyState /></div>}
     </div>
   );
 };
 
-const EnergyConsumptionCards = ({ generation, loading: generationLoading, yesterdaySolarKwh }) => {
+const EnergyConsumptionCards = ({ generation, loading: generationLoading, yesterdaySolarKwh,yesterdayGridKwh,  yesterdayLoadKwh }) => {
   const [cardLoading, setCardLoading] = useState(false);
   const [data, setData] = useState({ solargen: 0, gridgen: 0, loadconsumption: 0 });
 
@@ -312,11 +292,9 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading, yester
     </div>
   );
 
-  const deltaYesterday = (data.solargen || 0) - (yesterdaySolarKwh || 0);
-  const deltaPct = (yesterdaySolarKwh || 0) > 0 ? (deltaYesterday / yesterdaySolarKwh) * 100 : NaN;
-  const deltaBadge = isFinite(deltaPct)
-    ? `${deltaPct >= 0 ? "▲" : "▼"} ${nf.format(Math.abs(deltaPct))}% vs yesterday`
-    : "—";
+
+ 
+  
 
   return (
     <div className="bg-white border-b-2 border-gray-100">
@@ -337,9 +315,7 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading, yester
                   <div className="text-3xl font-bold text-emerald-600">
                     {Number(data.solargen).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded ${deltaPct >= 0 ? "bg-emerald-200 text-emerald-900" : "bg-red-200 text-red-900"}`}>
-                    {deltaBadge}
-                  </span>
+                 
                 </div>
                 <div className="mt-2 text-sm text-gray-700">Yesterday: <span className="font-semibold">{nf.format(yesterdaySolarKwh || 0)} kWh</span></div>
               </>
@@ -360,7 +336,11 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading, yester
                 <div className="text-3xl font-bold text-blue-600">
                   {Number(data.gridgen).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
                 </div>
-                <div className="mt-2 text-xs text-gray-500">Includes imported energy</div>
+                
+                
+   <div className="mt-2 text-sm text-gray-700">
+         Yesterday: <span className="font-semibold">{nf.format(yesterdayGridKwh || 0)} kWh</span>
+       </div>
               </>
             )}
           </div>
@@ -379,7 +359,9 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading, yester
                 <div className="text-3xl font-bold text-orange-600">
                   {Number(data.loadconsumption).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
                 </div>
-                <div className="mt-2 text-xs text-gray-500">Demand served by solar + grid</div>
+              
+                <div className="mt-2 text-sm text-gray-700">
+        Yesterday: <span className="font-semibold">{nf.format(yesterdayLoadKwh || 0)} kWh</span>       </div>
               </>
             )}
           </div>
@@ -673,18 +655,43 @@ const MergedHistoricalPage = ({ generation }) => {
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
   const [energyType, setEnergyType] = useState("solar"); // 'solar' | 'grid' | 'load'
-// Helper to get cookie value by name
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return "";
-}
- const locationcookie=getCookie('locationName');
+const didRecompute = useRef(false); // guard (e.g., StrictMode)
  
   const device = useSelector((state) => state.location.device);
 
- 
+ // Detect hard reload (Navigation Timing v2; fallback to v1)
+  const isPageReload = () => {
+  const nav = performance.getEntriesByType?.("navigation")?.[0];
+    if (nav && "type" in nav) return nav.type === "reload";
+    return window.performance?.navigation?.type === 1; // deprecated fallback
+  };
+
+ // Recompute only on first session load OR on hard reload
+  useEffect(() => {
+    if (!device) return;
+    if (didRecompute.current) return;
+
+    const firstVisitThisSession = !sessionStorage.getItem("__hist_recomputed");
+    const reloaded = isPageReload();
+
+    if (firstVisitThisSession || reloaded) {
+      didRecompute.current = true;
+      (async () => {
+        try {
+          await triggerServerRecompute(device);
+          // After recompute, pull fresh data
+          await refetch();
+        } catch (e) {
+          console.error(e);
+        } finally {
+          // mark so we don't run again in this tab session
+          sessionStorage.setItem("__hist_recomputed", "1");
+        }
+      })();
+    }
+  }, [device, refetch]);
+
+
 
   const safe = {
     yearly: apiData?.yearly ?? [],
@@ -719,6 +726,8 @@ function getCookie(name) {
     }
   }, [selectedYear, safe.yearly, CURRENT_MONTH, selectedMonth]);
 
+
+ 
   // Objects
   const yearlyObj = useMemo(
     () => safe.yearly.find((y) => y.id === selectedYear) || null,
@@ -801,6 +810,14 @@ function getCookie(name) {
     [yesterdayMonthObj, dY]
   );
 
+const yesterdayGridKwh = useMemo(
+ () => Number(yesterdayMonthObj?.days?.[dY]?.grid || 0),  [yesterdayMonthObj, dY]
+); 
+const yesterdayLoadKwh = useMemo(
+  () => Number(yesterdayMonthObj?.days?.[dY]?.load || 0),
+  [yesterdayMonthObj, dY]
+ );
+
   // lastProcessedTs in IST
  // raw input can be ISO string like "2025-08-28T11:47:13.386Z" or a number (ms)
 const rawLU = safe.lastProcessedTs;
@@ -832,9 +849,11 @@ console.log("Last updated:", lastProcessedTs);
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <DataHeader loading={loading} error={error} lastProcessedTs={lastProcessedTs} device={device} onRefresh={refetch} empty={empty} />
+    
+ <DataHeader loading={loading} error={error} lastProcessedTs={lastProcessedTs} device={device} empty={empty} />
 
-      <EnergyConsumptionCards generation={generation} loading={loading} yesterdaySolarKwh={yesterdaySolarKwh} />
+
+      <EnergyConsumptionCards generation={generation} loading={loading} yesterdaySolarKwh={yesterdaySolarKwh}  yesterdayGridKwh={yesterdayGridKwh}  yesterdayLoadKwh={yesterdayLoadKwh} />
 
       <FilterControls
         filterType={filterType}
