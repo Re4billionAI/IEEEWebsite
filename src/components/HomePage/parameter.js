@@ -176,12 +176,7 @@ const Card = ({ icon, name, value, measure, type }) => {
 
 const ParameterRepresentation = ({ parameters, device, type }) => {
   const baseData = [
-    { name: "Solar Voltage", icon: <Sun />, value: "solarVoltage", measure: "V" },
-    { name: "Solar Current", icon: <Sun />, value: "solarCurrent", measure: "A" },
-    { name: "Inverter Voltage", icon: <Zap />, value: "inverterVoltage", measure: "V" },
-    { name: "Inverter Current", icon: <Zap />, value: "inverterCurrent", measure: "A" },
-    { name: "Grid Voltage", icon: <PlugZap />, value: "gridVoltage", measure: "V" },
-    { name: "Grid Current", icon: <PlugZap />, value: "gridCurrent", measure: "A" },
+   
     { name: "Battery 1 Voltage", icon: <Battery />, value: "batteryVoltage", measure: "V" },
     { name: "Battery 2 Voltage", icon: <Battery />, value: "batteryVoltage2", measure: "V" },
     { name: "Battery 3 Voltage", icon: <Battery />, value: "batteryVoltage3", measure: "V" },
@@ -197,7 +192,7 @@ const ParameterRepresentation = ({ parameters, device, type }) => {
   return (
     <div className="p-4 md:p-6 lg:p-8 rounded-xl bg-white mx-4 md:mx-0">
       <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">
-        Parameter Representation
+       Battery
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {data.map((item, index) => {

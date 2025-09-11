@@ -6,7 +6,7 @@ import User from "./components/UserPage"
 
 import {BrowserRouter, Route, Routes} from "react-router-dom"
 import ProtectedRoute from "../src/components/ProtectedApp/protectedApp"
-import Dashboard from "./components/Dashboard/main"
+
 import Alerts from "./components/Alerts/main"
 import Location from "./components/location/main"
 
@@ -20,7 +20,7 @@ function App() {
 {/* Admin Routes*/}
      <Route  element={<ProtectedRoute   extraProps={{name:"Admin"}}/>}>
      <Route exact path="/" element={<Home/>} />
-     <Route exact path="/Dashboard" element={<Dashboard/>} />
+   
      <Route exact path="/Alerts" element={<Alerts/>} />
      <Route exact path="/Location" element={<Location/>} />
      </Route>

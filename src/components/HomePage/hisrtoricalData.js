@@ -21,11 +21,10 @@ import {
   PlugZap,
   Sun,
   Zap,
-  RefreshCw,
   AlertTriangle,
-  Leaf,        // NEW: for environmental cards
-  Factory,     // NEW: for environmental cards
-  Cloud,       // NEW: for environmental cards
+  Leaf,
+  Factory,
+  Cloud,
 } from "lucide-react";
 
 // ---------------------------------------------
@@ -34,17 +33,16 @@ import {
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const COLORS = ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#84cc16","#f97316"];
 
-// Series metadata (fixed colors)
 const SERIES = {
-  solar: { key: "solar", label: "Solar", color: "#10b981" }, // emerald
-  grid:  { key: "grid",  label: "Grid",  color: "#3b82f6" }, // blue
-  load:  { key: "load",  label: "Load",  color: "#f59e0b" }, // amber
+  solar: { key: "solar", label: "Solar", color: "#10b981" },
+  grid:  { key: "grid",  label: "Grid",  color: "#3b82f6" },
+  load:  { key: "load",  label: "Load",  color: "#f59e0b" },
 };
 
-// NEW: Environmental factors (tweak as needed or make them env-driven)
-const EF_CO2_KG_PER_KWH = 0.70;            // kg CO₂ per kWh avoided (India avg grid)
-const TREE_CO2_ABSORB_KG_PER_YEAR = 21.77; // kg CO₂ a tree absorbs per year
-const KG_STANDARD_COAL_PER_KWH = 0.50;     // kg coal avoided per kWh (typical)
+// Environmental factors
+const EF_CO2_KG_PER_KWH = 0.70;
+const TREE_CO2_ABSORB_KG_PER_YEAR = 21.77;
+const KG_STANDARD_COAL_PER_KWH = 0.50;
 
 // Formatters
 const nf = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
@@ -145,21 +143,27 @@ const normalizeHistorical = (json) => {
 };
 
 // ---------------------------------------------
-// API Helpers
+// API Helpers (Option A: gated auto-fetch + AbortController)
 // ---------------------------------------------
-const useApiData = () => {
+const useApiData = (auto = true) => {
   const [apiData, setApiData] = useState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [empty, setEmpty] = useState(false);
 
   const device = useSelector((state) => state.location.device);
-  const API_URL =`${process.env.REACT_APP_HOST}/admin/getHistoricalData` // <- change if needed
-  
+  const API_URL = `${process.env.REACT_APP_HOST}/admin/getHistoricalData`;
   const SITE_ID = device?.path;
+
+  const inFlight = useRef(null); // AbortController
 
   const fetchData = async () => {
     try {
+      // cancel any previous request
+      if (inFlight.current) inFlight.current.abort();
+      const ctrl = new AbortController();
+      inFlight.current = ctrl;
+
       setLoading(true);
       setError("");
       setEmpty(false);
@@ -169,6 +173,7 @@ const useApiData = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ siteId: SITE_ID }),
+        signal: ctrl.signal,
       });
       if (!res.ok) {
         let msg = `Request failed: HTTP ${res.status}`;
@@ -185,26 +190,36 @@ const useApiData = () => {
       }
 
       const json = normalizeHistorical(raw);
-      console.log({json})
       setApiData(json);
 
       const hasMonthly = Array.isArray(json.monthly) && json.monthly.length > 0;
       const hasYearly  = Array.isArray(json.yearly)  && json.yearly.length  > 0;
       if (!hasMonthly && !hasYearly) setEmpty(true);
     } catch (e) {
+      if (e.name === "AbortError") return; // silently ignore
       setError(e.message || "Unknown error");
     } finally {
+      // clear saved controller if it belongs to this run
+      inFlight.current = null;
       setLoading(false);
     }
   };
 
-  useEffect(() => { if (SITE_ID) fetchData(); }, [SITE_ID]);
+  // 👉 Only auto-fetch when `auto` is true
+  useEffect(() => {
+    if (auto && SITE_ID) fetchData();
+    // cleanup on unmount: abort any in-flight request
+    return () => {
+      if (inFlight.current) inFlight.current.abort();
+    };
+  }, [SITE_ID, auto]);
+
   return { apiData, loading, error, empty, refetch: fetchData };
 };
 
 // Optional “Refresh Data” trigger
 const triggerServerRecompute = async (device) => {
-  const url =`${process.env.REACT_APP_HISTORY_URL}/SingleSiteHistoricalData`
+  const url = `${process.env.REACT_APP_HISTORY_URL}/SingleSiteHistoricalData`;
   const payload = {
     site: {
       name: device.name,
@@ -242,7 +257,7 @@ const EmptyState = () => (
   </div>
 );
 
-const DataHeader = ({ loading, error, lastProcessedTs, device,  empty }) => {
+const DataHeader = ({ loading, error, lastProcessedTs, empty }) => {
   const statusText =
     loading ? "Loading data..." :
     error   ? `Error occurred` :
@@ -268,7 +283,7 @@ const DataHeader = ({ loading, error, lastProcessedTs, device,  empty }) => {
 const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday,parameters, yesterdaySolarKwh,yesterdayGridKwh,  yesterdayLoadKwh }) => {
   const [cardLoading, setCardLoading] = useState(false);
   const [data, setData] = useState({ solargen: 0, gridgen: 0, loadconsumption: 0 });
-  console.log({parameters})
+
   useEffect(() => {
     setCardLoading(true);
     const timer = setTimeout(() => {
@@ -296,7 +311,6 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Solar */}
           <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 p-6">
-            {/* Left content */}
             <div className="min-w-0">
               <div className="flex items-center gap-3 mb-3">
                 <div className="bg-emerald-500 p-2 ">
@@ -304,7 +318,6 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800 leading-tight">Solar Generation</h3>
-                  {/* <p className="text-sm text-gray-600">Clean Energy</p> */}
                 </div>
               </div>
 
@@ -330,21 +343,17 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
             {/* Right telemetry */}
             <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
               <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
-                
-                   <span className="font-semibold">{parameters.solarVoltage.toFixed(2)} V</span>
-            <span className="mx-3">{` ${"|"} `}</span>
-             
+                <span className="font-semibold">{parameters.solarVoltage.toFixed(2)} V</span>
+                <span className="mx-3">{` ${"|"} `}</span>
                 <span className="font-semibold">{parameters.solarCurrent.toFixed(2)} A</span>
-        
               </div>
             </div>
 
-            {/* Decorative corner accent */}
             <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-emerald-200/40 blur-2xl"></div>
           </div>
-    {/* Grid */}
-            <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6">
-            {/* Left content */}
+
+          {/* Grid */}
+          <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6">
             <div className="min-w-0">
               <div className="flex items-center gap-3 mb-3">
                 <div className="bg-blue-500 p-2">
@@ -352,7 +361,6 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800 leading-tight">Grid Generation</h3>
-                 
                 </div>
               </div>
 
@@ -378,42 +386,17 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
             {/* Right telemetry */}
             <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
               <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
-                
-                   <span className="font-semibold">{parameters.gridVoltage.toFixed(2)} V</span>
-            <span className="mx-3">{` ${"|"} `}</span>
-             
+                <span className="font-semibold">{parameters.gridVoltage.toFixed(2)} V</span>
+                <span className="mx-3">{` ${"|"} `}</span>
                 <span className="font-semibold">{parameters.gridCurrent.toFixed(2)} A</span>
-        
               </div>
             </div>
 
-            {/* Decorative corner accent */}
             <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48  bg-blue-200/40 blur-2xl"></div>
           </div>
 
-      
-          {/* <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="bg-blue-500 p-2"><PlugZap className="w-5 h-5 text-white" /></div>
-              <div>
-                <h3 className="font-semibold text-gray-700">Grid Energy</h3>
-                <p className="text-sm text-gray-500">Utility Power</p>
-              </div>
-            </div>
-            {cardLoading || generationLoading ? <CardLoader/> : (
-              <>
-                <div className="text-3xl font-bold text-blue-600">
-                  {Number(data.gridgen).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
-                </div>
-                {isToday && <div className="mt-2 text-sm text-gray-700">
-                  Yesterday: <span className="font-semibold">{nf.format(yesterdayGridKwh || 0)} kWh</span>
-                </div>}
-              </>
-            )}
-          </div> */}
-
-              <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6">
-            {/* Left content */}
+          {/* Load */}
+          <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6">
             <div className="min-w-0">
               <div className="flex items-center gap-3 mb-3">
                 <div className="bg-orange-500 p-2">
@@ -421,7 +404,6 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800 leading-tight">Load Consumption</h3>
-                 
                 </div>
               </div>
 
@@ -447,46 +429,22 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
             {/* Right telemetry */}
             <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
               <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
-                
-                   <span className="font-semibold">{parameters.inverterVoltage.toFixed(2)} V</span>
-            <span className="mx-3">{` ${"|"} `}</span>
-             
+                <span className="font-semibold">{parameters.inverterVoltage.toFixed(2)} V</span>
+                <span className="mx-3">{` ${"|"} `}</span>
                 <span className="font-semibold">{parameters.inverterCurrent.toFixed(2)} A</span>
-        
               </div>
             </div>
 
-            {/* Decorative corner accent */}
             <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48  bg-orange-200/40 blur-2xl"></div>
           </div>
 
-          {/* Load
-          <div className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-red-100 border border-orange-200 p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="bg-orange-500 p-2"><Zap className="w-5 h-5 text-white" /></div>
-              <div>
-                <h3 className="font-semibold text-gray-700">Load Consumption</h3>
-                <p className="text-sm text-gray-500">Total Usage</p>
-              </div>
-            </div>
-            {cardLoading || generationLoading ? <CardLoader/> : (
-              <>
-                <div className="text-3xl font-bold text-orange-600">
-                  {Number(data.loadconsumption).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
-                </div>
-                {isToday && <div className="mt-2 text-sm text-gray-700">
-                  Yesterday: <span className="font-semibold">{nf.format(yesterdayLoadKwh || 0)} kWh</span>
-                </div>}
-              </>
-            )}
-          </div> */}
         </div>
       </div>
     </div>
   );
 };
 
-// Filter controls (NO "All")
+// Filter controls
 const FilterControls = ({
   filterType, setFilterType,
   selectedYear, setSelectedYear,
@@ -522,7 +480,7 @@ const FilterControls = ({
           ))}
         </div>
 
-        {/* Energy Type (no "all") */}
+        {/* Energy Type */}
         <div className="bg-white border border-gray-300 p-1 ml-2">
           {["solar","grid","load"].map((k) => (
             <button
@@ -729,13 +687,9 @@ const TotalYearlyBar = ({ yearlyChartData, energyType }) => {
   );
 };
 
-// --- replace the existing EnvironmentalBenefits with this version ---
+// EnvironmentalBenefits
 const EnvironmentalBenefits = ({ solarKwh, periodLabel }) => {
   const kwh = Math.max(0, Number(solarKwh) || 0);
-
-  // Factors (same as before; tweak if needed)
-  // EF_CO2_KG_PER_KWH, KG_STANDARD_COAL_PER_KWH, TREE_CO2_ABSORB_KG_PER_YEAR
-
   const co2Kg  = kwh * EF_CO2_KG_PER_KWH;
   const coalKg = kwh * KG_STANDARD_COAL_PER_KWH;
   const trees  = TREE_CO2_ABSORB_KG_PER_YEAR > 0 ? (co2Kg / TREE_CO2_ABSORB_KG_PER_YEAR) : 0;
@@ -790,10 +744,7 @@ const EnvironmentalBenefits = ({ solarKwh, periodLabel }) => {
               <div className="text-3xl font-bold text-gray-900">{it.value}</div>
               <div className="text-sm text-gray-600 mt-1">{periodLabel}</div>
 
-              {/* concise mapping line */}
-              <div className="text-xs text-gray-700 mt-2">
-                {it.line}
-              </div>
+              <div className="text-xs text-gray-700 mt-2">{it.line}</div>
 
               <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/30 blur-2xl"></div>
             </div>
@@ -809,10 +760,12 @@ const EnvironmentalBenefits = ({ solarKwh, periodLabel }) => {
 };
 
 // ---------------------------------------------
-// Main Component
+// Main Component (Option A gating applied here)
 // ---------------------------------------------
 const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
-  const { apiData, loading, error, empty, refetch } = useApiData();
+  // 👇 gate auto-fetch
+  const [bootstrapped, setBootstrapped] = useState(false);
+  const { apiData, loading, error, empty } = useApiData(bootstrapped);
 
   const now = new Date();
   const CURRENT_YEAR = String(now.getFullYear());
@@ -821,9 +774,9 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
   const [filterType, setFilterType] = useState("month");
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
-  const [energyType, setEnergyType] = useState("solar"); // 'solar' | 'grid' | 'load'
-  const didRecompute = useRef(false); // guard (e.g., StrictMode)
- 
+  const [energyType, setEnergyType] = useState("solar");
+  const didRecompute = useRef(false);
+
   const device = useSelector((state) => state.location.device);
 
   // Detect hard reload
@@ -846,22 +799,24 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
       (async () => {
         try {
           await triggerServerRecompute(device);
-          await refetch();
         } catch (e) {
           console.error(e);
         } finally {
           sessionStorage.setItem("__hist_recomputed", "1");
+          setBootstrapped(true); // 👉 allow exactly ONE fetch now
         }
       })();
+    } else {
+      // No recompute needed this session—allow one normal fetch
+      setBootstrapped(true);
     }
-  }, [device, refetch]);
+  }, [device]);
 
   const safe = {
     yearly: apiData?.yearly ?? [],
     monthly: apiData?.monthly ?? [],
     lastProcessedTs: apiData?.lastProcessedTs ?? ""
   };
-  console.log(safe);
 
   // Initial selection based on available data
   const didInit = useRef(false);
@@ -933,7 +888,6 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
     });
   }, [monthlyObj, selectedYear, selectedMonth, energyType]);
 
-  // Pie remains for solar distribution (if you decide to render it later)
   const pieData = useMemo(() => {
     if (!yearlyObj?.months) return [];
     return Object.entries(yearlyObj.months)
@@ -941,7 +895,6 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
       .sort((a, b) => MONTH_NAMES.indexOf(a.name) - MONTH_NAMES.indexOf(b.name));
   }, [yearlyObj]);
 
-  // Period total number for the right card in Year view (for selected series)
   const periodEnergyKwh = useMemo(() => {
     if (filterType === "month") return Number(monthlyObj?.[`${energyType}_energy_kwh`] || 0);
     if (filterType === "year") {
@@ -952,14 +905,13 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
                                  yearlyObj.loadYearTotal
       ) || 0;
     }
-    // total across all years for selected series
     return safe.yearly.reduce((a, y) => {
       const v = energyType === "solar" ? y?.solarYearTotal : energyType === "grid" ? y?.gridYearTotal : y?.loadYearTotal;
       return a + Number(v || 0);
     }, 0);
   }, [filterType, monthlyObj, yearlyObj, safe.yearly, energyType]);
 
-  // NEW: Solar-only period energy for Environmental Benefits
+  // Solar-only for Environmental Benefits
   const periodSolarKwh = useMemo(() => {
     if (filterType === "month") return Number(monthlyObj?.solar_energy_kwh || 0);
     if (filterType === "year")  return Number(yearlyObj?.solarYearTotal || 0);
@@ -991,7 +943,7 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
     [yesterdayMonthObj, dY]
   );
 
-  // lastProcessedTs in IST (handles seconds/ms)
+  // lastProcessedTs in IST
   const rawLU = safe.lastProcessedTs;
   const timestampMs = typeof rawLU === "number" && rawLU < 1e12 ? rawLU * 1000 : rawLU;
   const d = new Date(timestampMs);
@@ -1007,11 +959,9 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
         hour12: false,
       });
 
-  console.log("Last updated:", lastProcessedTs);
-
   return (
     <div className="bg-gray-50 min-h-screen">
-      <DataHeader loading={loading} error={error} lastProcessedTs={lastProcessedTs} device={device} empty={empty} />
+      <DataHeader loading={loading} error={error} lastProcessedTs={lastProcessedTs} empty={empty} />
 
       <EnergyConsumptionCards
         generation={generation}
@@ -1038,10 +988,7 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
         setEnergyType={setEnergyType}
       />
 
-      {/* NEW: Environmental benefits block (always based on Solar for the chosen period) */}
       <div className="px-8 py-6">
-        
-
         {filterType === "month" && (
           <MonthDailyChart
             data={dailyChartData}
