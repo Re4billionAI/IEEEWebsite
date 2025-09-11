@@ -17,9 +17,9 @@ import {
   CircleAlert,
 } from "lucide-react";
 
-const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedEngergies }) => {
+const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate,updatedDateFunction,updatedEngergies }) => {
   const devicelocation = useSelector((state) => state.location.device);
-  console.log("Device Location:", devicelocation);
+ ;
   const [date, setDate] = useState(new Date());
   const [isLoading, setIsLoading] = useState(false); // Added loading state
   const lasttime = new Date(lastupdate * 1000);
@@ -55,10 +55,33 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
       });
 
       updatedEngergies(solarGeneration, gridEnergy, loadConsumption);
+     
     };
 
     fetchData();
+     
   }, [date]);
+
+const istodayfunc= () => {
+  console.log("Checking if date is today:", date);
+  const isToday = (dateLike) => {
+  const d = new Date(dateLike);
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+};
+
+// usage:
+if (isToday(date)) {
+updatedDateFunction(true)
+}else{
+  updatedDateFunction(false)
+}
+}
+
 
   const dataFetch = async () => {
     try {
@@ -66,6 +89,9 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
       if (!token) {
         throw new Error("Authentication token not found");
       }
+
+
+
 
       const response = await axios.post(
         `${process.env.REACT_APP_HOST}/admin/date`,
@@ -83,7 +109,7 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, updatedE
           throw new Error("Invalid API response: dataCharts is not an array");
         }
 
-       
+       istodayfunc()
 
         const newDataArray = dataCharts.map((chart) => ({
           time: chart.ccAxisXValue || "Unknown",

@@ -496,9 +496,9 @@ const additionalData = [
     "path": "Gajula-Dinne-AP",
     "board": "rmsv32_003",
     "type": "48v",
-      "geocode": [13.243932, 79.33514],
+      "geocode": [14.626912, 80.096949],
     "timeInterval": 5,
-    "capacity": 2,
+    "capacity": 2.3,
     "siteId": "Gajula-Dinne-AP"
   },
   {

@@ -5,14 +5,14 @@ import Cookies from 'js-cookie';
 import Spinner from "../Loader/loader";
 import { ArrowLeft, Menu } from 'lucide-react';
 import StatusCard from './statusCard';
-import EnergyConsumption from './EnergyConsumptions';
+
 import Graph from './graphs';
 import { Home, BarChart2, Info } from 'lucide-react'; // or your preferred icon library
 import HistoricalPage from './hisrtoricalData';
 import ParameterRepresentation from './parameter';
 
 import SiteDetails from '../InstallationForm/siteInfo.js';
-import { toggleSidebar } from '../Redux/CounterSlice';
+
 
 const HomePage = ({ handlePageChange }) => {
   const device = useSelector((state) => state.location.device);
@@ -23,8 +23,8 @@ const HomePage = ({ handlePageChange }) => {
   const [alert, showAlert] = useState(null);
   const [energies, setEnergies] = useState({ solargen: 0, gridgen: 0, loadconsumption: 0 });
 
-  const dispatch = useDispatch();
-  const isOpen = useSelector((state) => state.location.isSidebarOpen);
+
+ const [isToday, setisToday] = useState(true);
   const allLocations = useSelector((state) => state.location.locations);
 
   const fetchData = async (item, timeInterval) => {
@@ -96,6 +96,13 @@ const HomePage = ({ handlePageChange }) => {
     return match?.capacity || 'N/A';
   };
 
+
+  const updatedDateFunction=(istoday)=>{
+    console.log("isToday from home",istoday)
+ setisToday(istoday)
+
+
+  } 
 
 
   useEffect(() => {
@@ -187,13 +194,14 @@ const HomePage = ({ handlePageChange }) => {
                   device={device?.name || 'kollar'}
                   type={device?.type || 'unknown'}
                   alert={alert}
+                  updatedDateFunction={updatedDateFunction}
                   lastupdate={liveData.data.snapshot.tValue}
                   updatedEngergies={updatedEnergies}
                   capacity={getDeviceCapacity()}
                 />
                 {/* <EnergyConsumption generation={energies} /> */}
                
-                 <HistoricalPage generation={energies} parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
+                 <HistoricalPage generation={energies} isToday={isToday} parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
                   <ParameterRepresentation parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
               </div>
             )}

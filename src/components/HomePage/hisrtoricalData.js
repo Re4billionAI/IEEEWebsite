@@ -15,7 +15,18 @@ import {
 } from "recharts";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { CalendarDays, Loader2, PlugZap, Sun, Zap, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  CalendarDays,
+  Loader2,
+  PlugZap,
+  Sun,
+  Zap,
+  RefreshCw,
+  AlertTriangle,
+  Leaf,        // NEW: for environmental cards
+  Factory,     // NEW: for environmental cards
+  Cloud,       // NEW: for environmental cards
+} from "lucide-react";
 
 // ---------------------------------------------
 // Constants
@@ -29,6 +40,11 @@ const SERIES = {
   grid:  { key: "grid",  label: "Grid",  color: "#3b82f6" }, // blue
   load:  { key: "load",  label: "Load",  color: "#f59e0b" }, // amber
 };
+
+// NEW: Environmental factors (tweak as needed or make them env-driven)
+const EF_CO2_KG_PER_KWH = 0.70;            // kg CO₂ per kWh avoided (India avg grid)
+const TREE_CO2_ABSORB_KG_PER_YEAR = 21.77; // kg CO₂ a tree absorbs per year
+const KG_STANDARD_COAL_PER_KWH = 0.50;     // kg coal avoided per kWh (typical)
 
 // Formatters
 const nf = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
@@ -189,9 +205,6 @@ const useApiData = () => {
 // Optional “Refresh Data” trigger
 const triggerServerRecompute = async (device) => {
   const url =`${process.env.REACT_APP_HISTORY_URL}/SingleSiteHistoricalData`
-
- 
-// const url = "http://127.0.0.1:5001/rmstesting-d5aa6/us-central1/SingleSiteHistoricalData";
   const payload = {
     site: {
       name: device.name,
@@ -204,27 +217,20 @@ const triggerServerRecompute = async (device) => {
   return response.data;
 };
 
-
-
 // ---------------------------------------------
 // UI Subcomponents
 // ---------------------------------------------
-const ErrorBanner = ({ message, onRetry }) => (
+const ErrorBanner = ({ message }) => (
   <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 flex items-center justify-between">
     <div className="flex items-center gap-2">
       <AlertTriangle className="w-5 h-5" />
       <span className="font-medium">Error:</span>
       <span>{message}</span>
     </div>
-    {onRetry && (
-      <button onClick={onRetry} className="ml-4 px-3 py-1 border border-red-300 hover:bg-red-100 text-red-800">
-        Retry
-      </button>
-    )}
   </div>
 );
 
-const EmptyState = ({ onRefresh }) => (
+const EmptyState = () => (
   <div className="border border-yellow-200 bg-yellow-50 text-yellow-900 px-4 py-3">
     <div className="flex items-center gap-2">
       <AlertTriangle className="w-5 h-5" />
@@ -233,17 +239,10 @@ const EmptyState = ({ onRefresh }) => (
         <div className="text-sm mt-1">If you recently installed the device, click “Refresh Data”.</div>
       </div>
     </div>
-    {onRefresh && (
-      <div className="mt-3">
-        <div className="text-sm mt-1">If you recently installed the device, the page reload will auto-recompute.</div>
-      </div>
-    )}
   </div>
 );
 
 const DataHeader = ({ loading, error, lastProcessedTs, device,  empty }) => {
- 
- 
   const statusText =
     loading ? "Loading data..." :
     error   ? `Error occurred` :
@@ -259,7 +258,6 @@ const DataHeader = ({ loading, error, lastProcessedTs, device,  empty }) => {
             {statusText}
           </p>
         </div>
-      
       </div>
      {error && <div className="mt-3"><ErrorBanner message={error} /></div>}
      {(!error && empty) && <div className="mt-3"><EmptyState /></div>}
@@ -267,10 +265,10 @@ const DataHeader = ({ loading, error, lastProcessedTs, device,  empty }) => {
   );
 };
 
-const EnergyConsumptionCards = ({ generation, loading: generationLoading, yesterdaySolarKwh,yesterdayGridKwh,  yesterdayLoadKwh }) => {
+const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday,parameters, yesterdaySolarKwh,yesterdayGridKwh,  yesterdayLoadKwh }) => {
   const [cardLoading, setCardLoading] = useState(false);
   const [data, setData] = useState({ solargen: 0, gridgen: 0, loadconsumption: 0 });
-
+  console.log({parameters})
   useEffect(() => {
     setCardLoading(true);
     const timer = setTimeout(() => {
@@ -292,38 +290,109 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading, yester
     </div>
   );
 
-
- 
-  
-
   return (
     <div className="bg-white border-b-2 border-gray-100">
       <div className="px-8 py-2">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Solar */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-green-100 border border-emerald-200 p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="bg-emerald-500 p-2"><Sun className="w-5 h-5 text-white" /></div>
-              <div>
-                <h3 className="font-semibold text-gray-700">Solar Generation</h3>
-                <p className="text-sm text-gray-500">Clean Energy</p>
+          <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 p-6">
+            {/* Left content */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-emerald-500 p-2 ">
+                  <Sun className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 leading-tight">Solar Generation</h3>
+                  {/* <p className="text-sm text-gray-600">Clean Energy</p> */}
+                </div>
+              </div>
+
+              {cardLoading || generationLoading ? (
+                <CardLoader/>
+              ) : (
+                <>
+                  <div className="flex items-end gap-3">
+                    <div className="text-3xl font-bold text-emerald-700 tracking-tight">
+                      {Number(data.solargen).toFixed(2)} <span className="text-lg font-medium text-gray-600">kWh</span>
+                    </div>
+                  </div>
+
+                  {isToday && (
+                    <div className="mt-2 text-xs sm:text-sm text-gray-700">
+                      Yesterday: <span className="font-semibold">{nf.format(yesterdaySolarKwh || 0)} kWh</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Right telemetry */}
+            <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
+              <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
+                
+                   <span className="font-semibold">{parameters.solarVoltage.toFixed(2)} V</span>
+            <span className="mx-3">{` ${"|"} `}</span>
+             
+                <span className="font-semibold">{parameters.solarCurrent.toFixed(2)} A</span>
+        
               </div>
             </div>
-            {cardLoading || generationLoading ? <CardLoader/> : (
-              <>
-                <div className="flex items-end gap-3">
-                  <div className="text-3xl font-bold text-emerald-600">
-                    {Number(data.solargen).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
-                  </div>
+
+            {/* Decorative corner accent */}
+            <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-emerald-200/40 blur-2xl"></div>
+          </div>
+    {/* Grid */}
+            <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6">
+            {/* Left content */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-blue-500 p-2">
+                  <PlugZap className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 leading-tight">Grid Generation</h3>
                  
                 </div>
-                <div className="mt-2 text-sm text-gray-700">Yesterday: <span className="font-semibold">{nf.format(yesterdaySolarKwh || 0)} kWh</span></div>
-              </>
-            )}
+              </div>
+
+              {cardLoading || generationLoading ? (
+                <CardLoader/>
+              ) : (
+                <>
+                  <div className="flex items-end gap-3">
+                    <div className="text-3xl font-bold text-blue-700 tracking-tight">
+                      {Number(data.gridgen).toFixed(2)} <span className="text-lg font-medium text-gray-600">kWh</span>
+                    </div>
+                  </div>
+
+                  {isToday && (
+                    <div className="mt-2 text-xs sm:text-sm text-gray-700">
+                      Yesterday: <span className="font-semibold">{nf.format(yesterdayGridKwh || 0)} kWh</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Right telemetry */}
+            <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
+              <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
+                
+                   <span className="font-semibold">{parameters.gridVoltage.toFixed(2)} V</span>
+            <span className="mx-3">{` ${"|"} `}</span>
+             
+                <span className="font-semibold">{parameters.gridCurrent.toFixed(2)} A</span>
+        
+              </div>
+            </div>
+
+            {/* Decorative corner accent */}
+            <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48  bg-blue-200/40 blur-2xl"></div>
           </div>
 
-          {/* Grid */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6">
+      
+          {/* <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-blue-500 p-2"><PlugZap className="w-5 h-5 text-white" /></div>
               <div>
@@ -336,16 +405,62 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading, yester
                 <div className="text-3xl font-bold text-blue-600">
                   {Number(data.gridgen).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
                 </div>
-                
-                
-   <div className="mt-2 text-sm text-gray-700">
-         Yesterday: <span className="font-semibold">{nf.format(yesterdayGridKwh || 0)} kWh</span>
-       </div>
+                {isToday && <div className="mt-2 text-sm text-gray-700">
+                  Yesterday: <span className="font-semibold">{nf.format(yesterdayGridKwh || 0)} kWh</span>
+                </div>}
               </>
             )}
+          </div> */}
+
+              <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6">
+            {/* Left content */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="bg-orange-500 p-2">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 leading-tight">Load Consumption</h3>
+                 
+                </div>
+              </div>
+
+              {cardLoading || generationLoading ? (
+                <CardLoader/>
+              ) : (
+                <>
+                  <div className="flex items-end gap-3">
+                    <div className="text-3xl font-bold text-orange-700 tracking-tight">
+                      {Number(data.loadconsumption).toFixed(2)} <span className="text-lg font-medium text-gray-600">kWh</span>
+                    </div>
+                  </div>
+
+                  {isToday && (
+                    <div className="mt-2 text-xs sm:text-sm text-gray-700">
+                      Yesterday: <span className="font-semibold">{nf.format(yesterdayLoadKwh || 0)} kWh</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Right telemetry */}
+            <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
+              <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
+                
+                   <span className="font-semibold">{parameters.inverterVoltage.toFixed(2)} V</span>
+            <span className="mx-3">{` ${"|"} `}</span>
+             
+                <span className="font-semibold">{parameters.inverterCurrent.toFixed(2)} A</span>
+        
+              </div>
+            </div>
+
+            {/* Decorative corner accent */}
+            <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48  bg-orange-200/40 blur-2xl"></div>
           </div>
 
-          {/* Load */}
+          {/* Load
           <div className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-red-100 border border-orange-200 p-6">
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-orange-500 p-2"><Zap className="w-5 h-5 text-white" /></div>
@@ -359,12 +474,12 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading, yester
                 <div className="text-3xl font-bold text-orange-600">
                   {Number(data.loadconsumption).toFixed(2)} <span className="text-lg text-gray-500">kWh</span>
                 </div>
-              
-                <div className="mt-2 text-sm text-gray-700">
-        Yesterday: <span className="font-semibold">{nf.format(yesterdayLoadKwh || 0)} kWh</span>       </div>
+                {isToday && <div className="mt-2 text-sm text-gray-700">
+                  Yesterday: <span className="font-semibold">{nf.format(yesterdayLoadKwh || 0)} kWh</span>
+                </div>}
               </>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
@@ -572,33 +687,6 @@ const YearMonthlyBarAndPie = ({ monthlyChartData, pieData, selectedYear, total, 
           )}
         </div>
       </div>
-
-      {/* Solar distribution pie (unchanged) */}
-      <div className="bg-white border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900">Monthly Solar Distribution</h2>
-        </div>
-        <div className="p-6">
-          <div className="w-full h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={pieData} innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value" nameKey="name">
-                  {pieData.map((_, i) => <Cell key={`slice-${i}`} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip
-                  formatter={(v) => `${nf.format(Number(v) || 0)} kWh`}
-                  contentStyle={{ backgroundColor: "white", border: "1px solid #d1d5db", borderRadius: "0" }}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="text-center pt-4 border-t border-gray-200">
-            <div className="text-sm text-gray-500">Total Annual {SERIES[energyType].label} Energy</div>
-            <div className="text-2xl font-bold text-gray-900">{nf.format(Number(total) || 0)} kWh</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
@@ -641,10 +729,89 @@ const TotalYearlyBar = ({ yearlyChartData, energyType }) => {
   );
 };
 
+// --- replace the existing EnvironmentalBenefits with this version ---
+const EnvironmentalBenefits = ({ solarKwh, periodLabel }) => {
+  const kwh = Math.max(0, Number(solarKwh) || 0);
+
+  // Factors (same as before; tweak if needed)
+  // EF_CO2_KG_PER_KWH, KG_STANDARD_COAL_PER_KWH, TREE_CO2_ABSORB_KG_PER_YEAR
+
+  const co2Kg  = kwh * EF_CO2_KG_PER_KWH;
+  const coalKg = kwh * KG_STANDARD_COAL_PER_KWH;
+  const trees  = TREE_CO2_ABSORB_KG_PER_YEAR > 0 ? (co2Kg / TREE_CO2_ABSORB_KG_PER_YEAR) : 0;
+
+  const items = [
+    {
+      title: "CO₂ Avoided",
+      value: `${nf.format(co2Kg)} kg`,
+      line: `${nf.format(kwh)} kWh → ${nf.format(co2Kg)} kg CO₂ avoided`,
+      icon: <Cloud className="w-5 h-5 text-emerald-700" />,
+      bgFrom: "from-emerald-50",
+      bgTo: "to-green-100",
+      border: "border-emerald-200",
+    },
+    {
+      title: "Coal Saved",
+      value: `${nf.format(coalKg)} kg`,
+      line: `${nf.format(kwh)} kWh → ${nf.format(coalKg)} kg coal saved`,
+      icon: <Factory className="w-5 h-5 text-blue-700" />,
+      bgFrom: "from-blue-50",
+      bgTo: "to-blue-100",
+      border: "border-blue-200",
+    },
+    {
+      title: "Trees Equivalent",
+      value: nf.format(trees),
+      line: `${nf.format(kwh)} kWh → ${nf.format(trees)} trees`,
+      icon: <Leaf className="w-5 h-5 text-emerald-700" />,
+      bgFrom: "from-lime-50",
+      bgTo: "to-emerald-100",
+      border: "border-lime-200",
+    },
+  ];
+
+  return (
+    <div className="bg-white border border-gray-200 mb-8">
+      <div className="border-b border-gray-200 px-6 py-4">
+        <h2 className="text-xl font-semibold text-gray-900">Environmental Benefits</h2>
+      </div>
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {items.map((it) => (
+            <div
+              key={it.title}
+              className={`relative overflow-hidden bg-gradient-to-br ${it.bgFrom} ${it.bgTo} border ${it.border} rounded-lg p-5`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-white/80 p-2 rounded-md border">{it.icon}</div>
+                <h3 className="font-semibold text-gray-800">{it.title}</h3>
+              </div>
+
+              <div className="text-3xl font-bold text-gray-900">{it.value}</div>
+              <div className="text-sm text-gray-600 mt-1">{periodLabel}</div>
+
+              {/* concise mapping line */}
+              <div className="text-xs text-gray-700 mt-2">
+                {it.line}
+              </div>
+
+              <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/30 blur-2xl"></div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-[11px] font-bold text-gray-900 mt-4">
+          Factors: {EF_CO2_KG_PER_KWH} kg CO₂/kWh, {KG_STANDARD_COAL_PER_KWH} kg coal/kWh, 1 tree ≈ {TREE_CO2_ABSORB_KG_PER_YEAR} kg CO₂/yr.
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ---------------------------------------------
 // Main Component
 // ---------------------------------------------
-const MergedHistoricalPage = ({ generation }) => {
+const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
   const { apiData, loading, error, empty, refetch } = useApiData();
 
   const now = new Date();
@@ -655,18 +822,18 @@ const MergedHistoricalPage = ({ generation }) => {
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR);
   const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
   const [energyType, setEnergyType] = useState("solar"); // 'solar' | 'grid' | 'load'
-const didRecompute = useRef(false); // guard (e.g., StrictMode)
+  const didRecompute = useRef(false); // guard (e.g., StrictMode)
  
   const device = useSelector((state) => state.location.device);
 
- // Detect hard reload (Navigation Timing v2; fallback to v1)
+  // Detect hard reload
   const isPageReload = () => {
-  const nav = performance.getEntriesByType?.("navigation")?.[0];
+    const nav = performance.getEntriesByType?.("navigation")?.[0];
     if (nav && "type" in nav) return nav.type === "reload";
     return window.performance?.navigation?.type === 1; // deprecated fallback
   };
 
- // Recompute only on first session load OR on hard reload
+  // Recompute only on first session load OR on hard reload
   useEffect(() => {
     if (!device) return;
     if (didRecompute.current) return;
@@ -679,19 +846,15 @@ const didRecompute = useRef(false); // guard (e.g., StrictMode)
       (async () => {
         try {
           await triggerServerRecompute(device);
-          // After recompute, pull fresh data
           await refetch();
         } catch (e) {
           console.error(e);
         } finally {
-          // mark so we don't run again in this tab session
           sessionStorage.setItem("__hist_recomputed", "1");
         }
       })();
     }
   }, [device, refetch]);
-
-
 
   const safe = {
     yearly: apiData?.yearly ?? [],
@@ -726,8 +889,6 @@ const didRecompute = useRef(false); // guard (e.g., StrictMode)
     }
   }, [selectedYear, safe.yearly, CURRENT_MONTH, selectedMonth]);
 
-
- 
   // Objects
   const yearlyObj = useMemo(
     () => safe.yearly.find((y) => y.id === selectedYear) || null,
@@ -772,7 +933,7 @@ const didRecompute = useRef(false); // guard (e.g., StrictMode)
     });
   }, [monthlyObj, selectedYear, selectedMonth, energyType]);
 
-  // Pie = solar distribution across months (kept as-is)
+  // Pie remains for solar distribution (if you decide to render it later)
   const pieData = useMemo(() => {
     if (!yearlyObj?.months) return [];
     return Object.entries(yearlyObj.months)
@@ -780,7 +941,7 @@ const didRecompute = useRef(false); // guard (e.g., StrictMode)
       .sort((a, b) => MONTH_NAMES.indexOf(a.name) - MONTH_NAMES.indexOf(b.name));
   }, [yearlyObj]);
 
-  // Period total number for the right card in Year view
+  // Period total number for the right card in Year view (for selected series)
   const periodEnergyKwh = useMemo(() => {
     if (filterType === "month") return Number(monthlyObj?.[`${energyType}_energy_kwh`] || 0);
     if (filterType === "year") {
@@ -798,7 +959,20 @@ const didRecompute = useRef(false); // guard (e.g., StrictMode)
     }, 0);
   }, [filterType, monthlyObj, yearlyObj, safe.yearly, energyType]);
 
-  // Yesterday Solar (IST) for header cards
+  // NEW: Solar-only period energy for Environmental Benefits
+  const periodSolarKwh = useMemo(() => {
+    if (filterType === "month") return Number(monthlyObj?.solar_energy_kwh || 0);
+    if (filterType === "year")  return Number(yearlyObj?.solarYearTotal || 0);
+    return safe.yearly.reduce((a, y) => a + Number(y?.solarYearTotal || 0), 0);
+  }, [filterType, monthlyObj, yearlyObj, safe.yearly]);
+
+  const periodLabel = useMemo(() => {
+    if (filterType === "month") return `${monthLabel(selectedMonth)} ${selectedYear}`;
+    if (filterType === "year")  return `${selectedYear}`;
+    return "All Years";
+  }, [filterType, selectedMonth, selectedYear]);
+
+  // Yesterday metrics (IST)
   const yesterdayIST = new Date(toIST(new Date()).getTime() - 24 * 3600 * 1000);
   const { y: yY, m: mY, day: dY } = istYMD(yesterdayIST);
   const yesterdayMonthObj = useMemo(
@@ -809,51 +983,45 @@ const didRecompute = useRef(false); // guard (e.g., StrictMode)
     () => Number(yesterdayMonthObj?.days?.[dY]?.solar || 0),
     [yesterdayMonthObj, dY]
   );
+  const yesterdayGridKwh = useMemo(
+    () => Number(yesterdayMonthObj?.days?.[dY]?.grid || 0),  [yesterdayMonthObj, dY]
+  ); 
+  const yesterdayLoadKwh = useMemo(
+    () => Number(yesterdayMonthObj?.days?.[dY]?.load || 0),
+    [yesterdayMonthObj, dY]
+  );
 
-const yesterdayGridKwh = useMemo(
- () => Number(yesterdayMonthObj?.days?.[dY]?.grid || 0),  [yesterdayMonthObj, dY]
-); 
-const yesterdayLoadKwh = useMemo(
-  () => Number(yesterdayMonthObj?.days?.[dY]?.load || 0),
-  [yesterdayMonthObj, dY]
- );
+  // lastProcessedTs in IST (handles seconds/ms)
+  const rawLU = safe.lastProcessedTs;
+  const timestampMs = typeof rawLU === "number" && rawLU < 1e12 ? rawLU * 1000 : rawLU;
+  const d = new Date(timestampMs);
+  const lastProcessedTs = Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleString("en-GB", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "short",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
 
-  // lastProcessedTs in IST
- // raw input can be ISO string like "2025-08-28T11:47:13.386Z" or a number (ms)
-const rawLU = safe.lastProcessedTs;
-
-// Ensure it's in ms
-const timestampMs = typeof rawLU === "number" && rawLU < 1e12 
-  ? rawLU * 1000   // convert seconds → ms
-  : rawLU;
-
-const d = new Date(timestampMs);
-
-// Format in Kolkata timezone or return empty string if invalid
-const lastProcessedTs = Number.isNaN(d.getTime())
-  ? ""
-  : d.toLocaleString("en-GB", {
-      timeZone: "Asia/Kolkata",
-      year: "numeric",
-      month: "short",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-
-console.log("Last updated:", lastProcessedTs);
-
-// Example: "28 Aug 2025, 17:20"
-
+  console.log("Last updated:", lastProcessedTs);
 
   return (
     <div className="bg-gray-50 min-h-screen">
-    
- <DataHeader loading={loading} error={error} lastProcessedTs={lastProcessedTs} device={device} empty={empty} />
+      <DataHeader loading={loading} error={error} lastProcessedTs={lastProcessedTs} device={device} empty={empty} />
 
-
-      <EnergyConsumptionCards generation={generation} loading={loading} yesterdaySolarKwh={yesterdaySolarKwh}  yesterdayGridKwh={yesterdayGridKwh}  yesterdayLoadKwh={yesterdayLoadKwh} />
+      <EnergyConsumptionCards
+        generation={generation}
+        loading={loading}
+        isToday={isToday}
+        yesterdaySolarKwh={yesterdaySolarKwh}
+        yesterdayGridKwh={yesterdayGridKwh}
+        yesterdayLoadKwh={yesterdayLoadKwh}
+        parameters={parameters}
+      />
 
       <FilterControls
         filterType={filterType}
@@ -870,7 +1038,10 @@ console.log("Last updated:", lastProcessedTs);
         setEnergyType={setEnergyType}
       />
 
+      {/* NEW: Environmental benefits block (always based on Solar for the chosen period) */}
       <div className="px-8 py-6">
+        
+
         {filterType === "month" && (
           <MonthDailyChart
             data={dailyChartData}
@@ -897,6 +1068,7 @@ console.log("Last updated:", lastProcessedTs);
           />
         )}
       </div>
+      <EnvironmentalBenefits solarKwh={periodSolarKwh} periodLabel={periodLabel} />
     </div>
   );
 };
