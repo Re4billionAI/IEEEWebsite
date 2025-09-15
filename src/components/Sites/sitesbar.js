@@ -1,88 +1,91 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiX, FiSearch } from "react-icons/fi";
-import { useSelector, useDispatch } from 'react-redux'
-import { updateLocation, toggleSpecificPage, toggleSidebar } from '../Redux/CounterSlice'
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  updateLocation,
+  toggleSpecificPage,
+  toggleSidebar,
+} from "../Redux/CounterSlice"; // <- make sure this path & exports match your slice file
+import { loadLocations } from "../Redux/CounterSlice"; // <- import the thunk from your slice file
+import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 
-
-
-
-
-
-
-
-
 export default function Sitesbar() {
-  // Additional data items
-  
+  const dispatch = useDispatch();
 
-    const dispatch = useDispatch();
-    const specificPage = useSelector(state => state.location.specificPage);
-    
-   
-  const isOpen = useSelector((state) => state.location.isSidebarOpen);
-  
-    const handlePageChange = () => {
-    
-      dispatch(toggleSpecificPage("specificPage"));
-      
-    
-    }
-      const handleToggle = () => {
+  // Slice state
+  const {
+    locations = [],
+    isSidebarOpen: isOpen,
+    specificPage,
+    loadStatus,
+    loadError,
+    device,
+  } = useSelector((state) => state.location);
+
+  // Kick off the API call when the sidebar mounts
+  useEffect(() => {
+    dispatch(loadLocations());
+  }, [dispatch]);
+
+  const handlePageChange = () => {
+    dispatch(toggleSpecificPage("specificPage"));
+  };
+
+  const handleToggle = () => {
     dispatch(toggleSidebar());
   };
-  
 
- const additionalData = useSelector((state) => state.location.locations);
- 
-
-
-
-
+  // Cookies -> initial selection UI (fallbacks)
   const getCookie = (name) => {
-    const matches = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    const matches = document.cookie.match(
+      new RegExp(`(?:^|; )${name}=([^;]*)`)
+    );
     return matches ? decodeURIComponent(matches[1]) : null;
   };
-  const location = useLocation();
+
+  const routerLocation = useLocation();
   const navigate = useNavigate();
-  const [selectedLocation, setSelectedLocation] = useState({name: getCookie("locationName"), path: getCookie("locationPath"), board: getCookie("locationBoard"), type: getCookie("locationType"), timeInterval:getCookie("locationTimeInterval") });
+
+  const [selectedLocation, setSelectedLocation] = useState({
+    name: getCookie("locationName") || device?.name || "",
+    path: getCookie("locationPath") || device?.path || "",
+    board: getCookie("locationBoard") || device?.board || "",
+    type: getCookie("locationType") || device?.type || "",
+    timeInterval:
+      getCookie("locationTimeInterval") || device?.timeInterval || 5,
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
 
+  const changeLocation = (data) => {
+    dispatch(updateLocation(data));
+    setSelectedLocation(data);
+    dispatch(toggleSidebar()); // close the sidebar
 
+    // (Optional) You can remove these because updateLocation already writes cookies.
+    /*
+    Cookies.set("locationName", data.name);
+    Cookies.set("locationPath", data.path);
+    Cookies.set("locationBoard", data.board);
+    Cookies.set("locationType", data.type);
+    Cookies.set("locationTimeInterval", data.timeInterval);
+    Cookies.set("locationGeocode", JSON.stringify(data.geocode));
+    Cookies.set("capacity", JSON.stringify(data.capacity));
+    Cookies.set("siteId", JSON.stringify(data.siteId));
+    */
 
- 
+    navigate("/");
+    setSearchTerm("");
+  };
 
-
-
-const changeLocation = (data) => {
-
-  dispatch(updateLocation(data));
-  setSelectedLocation(data);
-  dispatch(toggleSidebar()); // ✅ properly close the sidebar
-
-  Cookies.set("locationName", data.name);
-  Cookies.set("locationPath", data.path);
-  Cookies.set("locationBoard", data.board);
-  Cookies.set("locationType", data.type);
-  Cookies.set("locationTimeInterval", data.timeInterval);
-  Cookies.set("locationGeocode", JSON.stringify(data.geocode));
-Cookies.set("capacity", JSON.stringify(data.capacity));
-Cookies.set("siteId", JSON.stringify(data.siteId));
-
-
-
-
-  navigate("/");
-  setSearchTerm("");
-};
-
-
-
-  // Filter the data based on search term (case-insensitive)
-  const filteredData = additionalData.filter((data) =>
-    data.name.toLowerCase().includes(searchTerm.toLowerCase())||data.board.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Safe filter (handles empty arrays and missing fields)
+  const filteredData = (locations || []).filter((d) => {
+    const name = (d?.name || "").toLowerCase();
+    const board = (d?.board || "").toLowerCase();
+    const q = searchTerm.toLowerCase();
+    return name.includes(q) || board.includes(q);
+  });
 
   return (
     <div
@@ -116,17 +119,26 @@ Cookies.set("siteId", JSON.stringify(data.siteId));
           />
         </div>
 
-        {/* Additional Data List with Custom Scrollbar */}
+        {/* Status / Errors */}
+        {loadStatus === "loading" && (
+          <div className="text-indigo-100 mb-2">Loading sites…</div>
+        )}
+        {loadStatus === "failed" && (
+          <div className="text-red-200 mb-2">
+            Failed to load sites: {String(loadError)}
+          </div>
+        )}
+
+        {/* Site List */}
         <ul className="space-y-4 max-h-[calc(100vh-220px)] overflow-y-auto custom-scrollbar">
-          {filteredData.map((data, index) => (
+          {filteredData.map((data) => (
             <li
-              key={index}
+              key={data.siteId} // use stable key
               onClick={() => {
                 handlePageChange();
                 changeLocation(data);
-                
               }}
-              className={`px-4 py-2 mr-2  cursor-pointer transition-colors  text-sm ${
+              className={`px-4 py-2 mr-2 cursor-pointer transition-colors text-sm ${
                 selectedLocation.name === data.name
                   ? "bg-white text-gray-700"
                   : "bg-indigo-500 hover:bg-indigo-900 text-white"
@@ -135,6 +147,11 @@ Cookies.set("siteId", JSON.stringify(data.siteId));
               {data.name}
             </li>
           ))}
+
+          {/* Empty state */}
+          {loadStatus === "succeeded" && filteredData.length === 0 && (
+            <li className="text-indigo-100">No sites found.</li>
+          )}
         </ul>
       </div>
 
@@ -143,7 +160,7 @@ Cookies.set("siteId", JSON.stringify(data.siteId));
         <p className="text-center text-indigo-200 text-sm">v1.5.0</p>
       </div>
 
-      {/* Custom styles for the scrollbar */}
+      {/* Custom scrollbar */}
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 12px;
@@ -159,10 +176,9 @@ Cookies.set("siteId", JSON.stringify(data.siteId));
         }
         .custom-scrollbar {
           scrollbar-width: thin;
-          border-top-radius:30px;
+          border-top-radius: 30px;
           scrollbar-color: rgba(255, 255, 255, 0.5) transparent;
         }
-          
       `}</style>
     </div>
   );
