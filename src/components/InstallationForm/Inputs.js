@@ -21,7 +21,7 @@ const InputField = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full p-3 ${Icon ? 'pl-10' : ''} border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none`}
+          className={`w-full p-3 ${Icon ? 'pl-10' : ''} border border-gray-300  focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none`}
           rows="3"
         />
       ) : (
@@ -30,7 +30,7 @@ const InputField = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full p-3 ${Icon ? 'pl-10' : ''} border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
+          className={`w-full p-3 ${Icon ? 'pl-10' : ''} border border-gray-300  focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
         />
       )}
     </div>
@@ -70,9 +70,9 @@ const SiteImageSelector = ({ selectedFile, onFileSelect }) => {
   return (
     <div className="w-full relative group">
       {imagePreview ? (
-        <img src={imagePreview} alt="Site" className="w-full h-64 object-cover rounded-xl shadow-lg" />
+        <img src={imagePreview} alt="Site" className="w-full h-64 object-cover  shadow-lg" />
       ) : (
-        <div className="w-full h-64 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center rounded-xl shadow-lg cursor-pointer">
+        <div className="w-full h-64 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center  shadow-lg cursor-pointer">
           <div className="text-center">
             <Camera className="w-16 h-16 text-white opacity-60 mx-auto mb-2" />
             <p className="text-white">Click to select site image</p>
@@ -92,7 +92,7 @@ const SiteImageSelector = ({ selectedFile, onFileSelect }) => {
       />
       <button
         onClick={() => fileInputRef.current?.click()}
-        className="absolute top-4 right-4 p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white"
+        className="absolute top-4 right-4 p-2 bg-white bg-opacity-20 hover:bg-opacity-30  text-white"
       >
         <Upload className="w-5 h-5" />
       </button>
@@ -550,7 +550,7 @@ const PlantInstallationModal = () => {
         return (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-blue-50 p-6 rounded-lg">
+              <div className="bg-blue-50 p-6 ">
                 <h4 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
                   <Gauge className="w-5 h-5 mr-2" />
                   Actual Measurements
@@ -586,7 +586,7 @@ const PlantInstallationModal = () => {
                   />
                 </div>
               </div>
-              <div className="bg-green-50 p-6 rounded-lg">
+              <div className="bg-green-50 p-6 ">
                 <h4 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
                   <Settings className="w-5 h-5 mr-2" />
                   RMS Measurements
@@ -705,7 +705,7 @@ const PlantInstallationModal = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white  shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col"
           >
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 flex justify-between items-center">
               <div>
@@ -721,12 +721,12 @@ const PlantInstallationModal = () => {
             {(error || success) && (
               <div className="px-6 pt-4">
                 {error && (
-                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3  mb-4">
                     {error}
                   </div>
                 )}
                 {success && (
-                  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                  <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3  mb-4">
                     {success}
                   </div>
                 )}
@@ -739,7 +739,7 @@ const PlantInstallationModal = () => {
                   {steps.map((step, index) => (
                     <div
                       key={index}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-full text-sm font-medium transition ${
+                      className={`flex items-center space-x-2 px-3 py-2  text-sm font-medium transition ${
                         index === currentStep
                           ? 'bg-blue-600 text-white shadow-lg'
                           : index < currentStep
@@ -752,10 +752,10 @@ const PlantInstallationModal = () => {
                     </div>
                   ))}
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200  h-2">
                   <div
                     style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-                    className="bg-blue-600 h-2 rounded-full transition"
+                    className="bg-blue-600 h-2  transition"
                   />
                 </div>
               </div>
@@ -774,7 +774,7 @@ const PlantInstallationModal = () => {
               <button
                 onClick={prevStep}
                 disabled={currentStep === 0}
-                className={`px-6 py-3 rounded-lg font-medium ${
+                className={`px-6 py-3  font-medium ${
                   currentStep === 0
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -786,7 +786,7 @@ const PlantInstallationModal = () => {
               <div className="flex space-x-3">
                 <button
                   onClick={closeModal}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300"
+                  className="px-6 py-3 bg-gray-200 text-gray-700  font-medium hover:bg-gray-300"
                 >
                   Cancel
                 </button>
@@ -795,7 +795,7 @@ const PlantInstallationModal = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className={`px-8 py-3 rounded-lg font-medium shadow ${
+                    className={`px-8 py-3  font-medium shadow ${
                       isSubmitting
                         ? 'bg-gray-400 text-white cursor-not-allowed'
                         : 'bg-green-600 text-white hover:bg-green-700'
@@ -806,7 +806,7 @@ const PlantInstallationModal = () => {
                 ) : (
                   <button
                     onClick={nextStep}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 shadow flex items-center"
+                    className="px-6 py-3 bg-blue-600 text-white  font-medium hover:bg-blue-700 shadow flex items-center"
                   >
                     Next
                     <ChevronRight className="ml-2 w-4 h-4" />

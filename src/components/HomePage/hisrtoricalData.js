@@ -44,6 +44,13 @@ const EF_CO2_KG_PER_KWH = 0.70;
 const TREE_CO2_ABSORB_KG_PER_YEAR = 21.77;
 const KG_STANDARD_COAL_PER_KWH = 0.50;
 
+// ---------- Financial constants (tweak as needed) ----------
+const GRID_TARIFF_INR_PER_KWH   = 9.0;   // ₹/kWh avoided when solar serves on-site load
+const EXPORT_TARIFF_INR_PER_KWH = 3.0;   // ₹/kWh for export (FiT/net-metering). Set 0 if not applicable.
+const IS_PPA                     = false; // set true if a PPA is used
+const PPA_RATE_INR_PER_KWH       = 0.0;  // ₹/kWh paid to PPA provider when IS_PPA is true
+const PERIOD_OM_COST_INR         = 0.0;  // optional fixed O&M deduction per period
+
 // Formatters
 const nf = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
 const nf0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
@@ -759,6 +766,112 @@ const EnvironmentalBenefits = ({ solarKwh, periodLabel }) => {
   );
 };
 
+// -------------------------
+// FinancialBenefits (NEW)
+// -------------------------
+const FinancialBenefits = ({
+  solarKwh,
+  loadKwh,
+  periodLabel,
+  gridTariff = GRID_TARIFF_INR_PER_KWH,
+  exportTariff = EXPORT_TARIFF_INR_PER_KWH,
+  isPpa = IS_PPA,
+  ppaRate = PPA_RATE_INR_PER_KWH,
+  omCost = PERIOD_OM_COST_INR
+}) => {
+  // Approximation using totals:
+  // Self-consumed ≈ min(solar, load); Export ≈ solar - self-consumed
+  const kwhSolar  = Math.max(0, Number(solarKwh) || 0);
+  const kwhLoad   = Math.max(0, Number(loadKwh)  || 0);
+  const selfUse   = Math.min(kwhSolar, kwhLoad);
+  const exportKwh = Math.max(0, kwhSolar - selfUse);
+
+  // ₹ values
+  const gridAvoidedINR = selfUse   * gridTariff;
+  const exportINR      = exportKwh * exportTariff;
+  const ppaCostINR     = isPpa ? (kwhSolar * ppaRate) : 0;
+
+  const grossBenefitINR = gridAvoidedINR + exportINR;
+  const netSavingsINR   = grossBenefitINR - ppaCostINR - (omCost || 0);
+  const effRateINR      = kwhSolar > 0 ? (netSavingsINR / kwhSolar) : 0;
+
+  const items = [
+    {
+      title: "Grid Cost Avoided",
+      value: `₹ ${nf.format(gridAvoidedINR)}`,
+      line: `${nf.format(selfUse)} kWh × ₹${gridTariff}/kWh`,
+      bgFrom: "from-emerald-50", bgTo: "to-emerald-100", border: "border-emerald-200",
+      icon: <PlugZap className="w-5 h-5 text-emerald-700" />
+    },
+    {
+      title: "Export Revenue",
+      value: `₹ ${nf.format(exportINR)}`,
+      line: `${nf.format(exportKwh)} kWh × ₹${exportTariff}/kWh`,
+      bgFrom: "from-blue-50", bgTo: "to-blue-100", border: "border-blue-200",
+      icon: <Sun className="w-5 h-5 text-blue-700" />
+    },
+    ...(isPpa ? [{
+      title: "PPA Payment",
+      value: `₹ ${nf.format(ppaCostINR)}`,
+      line: `${nf.format(kwhSolar)} kWh × ₹${ppaRate}/kWh`,
+      bgFrom: "from-amber-50", bgTo: "to-amber-100", border: "border-amber-200",
+      icon: <CalendarDays className="w-5 h-5 text-amber-700" />
+    }] : []),
+    ...(omCost > 0 ? [{
+      title: "O&M Cost (Period)",
+      value: `₹ ${nf.format(omCost)}`,
+      line: "Fixed O&M deducted",
+      bgFrom: "from-slate-50", bgTo: "to-slate-100", border: "border-slate-200",
+      icon: <Factory className="w-5 h-5 text-slate-700" />
+    }] : [])
+  ];
+
+  return (
+    <div className="bg-white border border-gray-200 mb-8">
+      <div className="border-b border-gray-200 px-6 py-4">
+        <h2 className="text-xl font-semibold text-gray-900">Financial Benefits</h2>
+      </div>
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {items.map((it) => (
+            <div key={it.title}
+              className={`relative overflow-hidden bg-gradient-to-br ${it.bgFrom} ${it.bgTo} border ${it.border} rounded-lg p-5`}>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="bg-white/80 p-2 rounded-md border">{it.icon}</div>
+                <h3 className="font-semibold text-gray-800">{it.title}</h3>
+              </div>
+              <div className="text-3xl font-bold text-gray-900">{it.value}</div>
+              <div className="text-sm text-gray-600 mt-1">{periodLabel}</div>
+              <div className="text-xs text-gray-700 mt-2">{it.line}</div>
+              <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/30 blur-2xl"></div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="border p-4">
+            <div className="text-sm text-gray-600">Gross Benefit</div>
+            <div className="text-2xl font-semibold">₹ {nf.format(grossBenefitINR)}</div>
+          </div>
+          <div className="border p-4">
+            <div className="text-sm text-gray-600">Net Savings</div>
+            <div className="text-2xl font-semibold">₹ {nf.format(netSavingsINR)}</div>
+          </div>
+          <div className="border p-4">
+            <div className="text-sm text-gray-600">Effective Savings Rate</div>
+            <div className="text-2xl font-semibold">₹ {nf.format(effRateINR)} / kWh</div>
+          </div>
+        </div>
+
+        <div className="text-[11px] font-bold text-gray-900 mt-4">
+          Assumptions: Self-consumption ≈ min(Solar kWh, Load kWh); Export ≈ Solar − Self-consumption.
+          For exact values, use interval (15-min) data to compute simultaneity.
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ---------------------------------------------
 // Main Component (Option A gating applied here)
 // ---------------------------------------------
@@ -918,6 +1031,13 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
     return safe.yearly.reduce((a, y) => a + Number(y?.solarYearTotal || 0), 0);
   }, [filterType, monthlyObj, yearlyObj, safe.yearly]);
 
+  // Load energy for the period (for FinancialBenefits self-consumption calc)
+  const periodLoadKwh = useMemo(() => {
+    if (filterType === "month") return Number(monthlyObj?.load_energy_kwh || 0);
+    if (filterType === "year")  return Number(yearlyObj?.loadYearTotal || 0);
+    return safe.yearly.reduce((a, y) => a + Number(y?.loadYearTotal || 0), 0);
+  }, [filterType, monthlyObj, yearlyObj, safe.yearly]);
+
   const periodLabel = useMemo(() => {
     if (filterType === "month") return `${monthLabel(selectedMonth)} ${selectedYear}`;
     if (filterType === "year")  return `${selectedYear}`;
@@ -1015,7 +1135,15 @@ const MergedHistoricalPage = ({ generation, isToday, parameters }) => {
           />
         )}
       </div>
+
       <EnvironmentalBenefits solarKwh={periodSolarKwh} periodLabel={periodLabel} />
+
+      {/* NEW: Financial Benefits */}
+      <FinancialBenefits
+        solarKwh={periodSolarKwh}
+        loadKwh={periodLoadKwh}
+        periodLabel={periodLabel}
+      />
     </div>
   );
 };
