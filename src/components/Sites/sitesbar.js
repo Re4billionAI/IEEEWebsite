@@ -259,10 +259,11 @@ export default function Sitesbar() {
           {/* Site List */}
           <ul className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
             {filteredData.map((data) => (
-              <li
+              <div className="flex ">
+                <li
                 key={data.siteId}
                 onClick={() => changeLocation(data)}
-                className={`flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-colors ${
+                className={`flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer w-[90%] transition-colors ${
                   selectedSiteId === data.siteId
                     ? "bg-indigo-500 text-white"
                     : "bg-indigo-700/50 hover:bg-indigo-600 text-white"
@@ -274,7 +275,9 @@ export default function Sitesbar() {
                 >
                   {data.name}
                 </span>
-                {showEditIcons && (
+                
+              </li>
+              {showEditIcons && (
                   <button
                     onClick={() => {
                       setEditSiteData({
@@ -291,7 +294,8 @@ export default function Sitesbar() {
                     <FiEdit2 size={18} />
                   </button>
                 )}
-              </li>
+              </div>
+              
             ))}
             {loadStatus === "succeeded" && filteredData.length === 0 && (
               <li className="text-indigo-200 text-sm">No sites found.</li>
