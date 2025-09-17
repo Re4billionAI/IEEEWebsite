@@ -27,64 +27,75 @@ const HomePage = ({ handlePageChange }) => {
  const [isToday, setisToday] = useState(true);
   const allLocations = useSelector((state) => state.location.locations);
 
-  const fetchData = async (item, timeInterval) => {
-    if (!item) return;
-    try {
-      setLoading(true);
-      setError(null);
-      if (!navigator.onLine) throw new Error('No internet connection. Please check your network.');
-      const token = Cookies.get('token');
-      if (!token) throw new Error('Authentication token is missing');
+ const fetchData = async (item, timeInterval) => {
+  if (!item) return;
+  try {
+    setLoading(true);
+    setError(null);
 
-      const response = await axios.post(
-        `${process.env.REACT_APP_HOST}/admin/db`,
-        { selectedItem: item, timeInterval },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    if (!navigator.onLine) throw new Error('No internet connection. Please check your network.');
 
-      if (response.status === 200) {
-        const data = response.data.data;
-        setLiveData(response.data);
-        setEnergies({
-          solargen: data.p1ValueTot,
-          gridgen: data.p2ValueTot,
-          loadconsumption: data.p3ValueTot
-        });
+    const token = Cookies.get('token');
+    if (!token) throw new Error('Authentication token is missing');
 
-        if (data.dataCharts.length > 0) {
-          const t = new Date();
-          const currTime = new Intl.DateTimeFormat("en-US", {
-            hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata"
-          }).format(t); 
+    const response = await axios.post(
+      `${process.env.REACT_APP_HOST}/admin/db`,
+      { selectedItem: item, timeInterval },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-          const check = data.dataCharts[data.dataCharts.length - 1].ccAxisXValue;
-          const [currHours, currMinutes] = currTime.split(":").map(Number);
-          const [checkHours, checkMinutes] = check.split(":").map(Number);
+    if (response.status === 200) {
+      const data = response.data.data;
+      setLiveData(response.data);
+      setEnergies({
+        solargen: data.p1ValueTot,
+        gridgen: data.p2ValueTot,
+        loadconsumption: data.p3ValueTot
+      });
 
-          const now = new Date();
-          const currentDateTime = new Date(now);
-          currentDateTime.setHours(currHours, currMinutes, 0, 0);
+      if (data.dataCharts.length > 0) {
+        const t = new Date();
+        const currTime = new Intl.DateTimeFormat("en-US", {
+          hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Kolkata"
+        }).format(t); 
 
-          const checkDateTime = new Date(now);
-          checkDateTime.setHours(checkHours, checkMinutes, 0, 0);
-          if (checkDateTime > currentDateTime) checkDateTime.setDate(checkDateTime.getDate() - 1);
+        const check = data.dataCharts[data.dataCharts.length - 1].ccAxisXValue;
+        const [currHours, currMinutes] = currTime.split(":").map(Number);
+        const [checkHours, checkMinutes] = check.split(":").map(Number);
 
-          const diffInMinutes = Math.abs((currentDateTime - checkDateTime) / (1000 * 60));
+        const now = new Date();
+        const currentDateTime = new Date(now);
+        currentDateTime.setHours(currHours, currMinutes, 0, 0);
 
-          showAlert(diffInMinutes <= 30 ? "success" : "danger");
-        } else {
-          showAlert("danger");
-        }
+        const checkDateTime = new Date(now);
+        checkDateTime.setHours(checkHours, checkMinutes, 0, 0);
+        if (checkDateTime > currentDateTime) checkDateTime.setDate(checkDateTime.getDate() - 1);
+
+        const diffInMinutes = Math.abs((currentDateTime - checkDateTime) / (1000 * 60));
+        showAlert(diffInMinutes <= 30 ? "success" : "danger");
+      } else {
+        showAlert("danger");
       }
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err.message === 'No internet connection. Please check your network.'
-        ? err.message
-        : err.response?.data?.message || 'Failed to fetch data. Please try again later.');
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching data:", err);
+
+    // ✅ Proper error message handling
+    if (err.response) {
+      // API responded with error (400, 404, 500…)
+      setError(err.response.data.error || err.response.data.message || "Unexpected error from server");
+    } else if (err.request) {
+      // No response received
+      setError("Server not responding. Please try again later.");
+    } else {
+      // Something went wrong in request setup
+      setError(err.message || "Request failed. Please try again.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const updatedEnergies = (solargen, gridgen, loadconsumption) => {
     setEnergies({ solargen, gridgen, loadconsumption });
@@ -109,31 +120,24 @@ const HomePage = ({ handlePageChange }) => {
     if (device?.path) fetchData(device.path, device.timeInterval);
   }, [device]);
 
-  const ErrorDisplay = ({ message }) => (
-    <div className="flex flex-col items-center justify-start h-screen w-full pt-28">
-      <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-md">
-        <img
-          src="/images/error-illustration.svg"
-          alt="Error"
-          className="w-32 h-32 mx-auto mb-4"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "data:image/svg+xml;base64,..."; // fallback base64
-          }}
-        />
-        <h3 className="text-red-600 text-xl font-bold mb-2 text-center">Connection Error</h3>
-        <p className="text-gray-700 text-center">{message}</p>
-        <button
-          onClick={() => {
-            if (device?.path) fetchData(device.path, device.timeInterval);
-          }}
-          className="mt-4 w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-        >
-          Try Again
-        </button>
-      </div>
+ const ErrorDisplay = ({ message }) => (
+  <div className="flex flex-col items-center justify-start h-screen w-full pt-28">
+    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 max-w-md">
+      <h3 className="text-red-600 text-xl font-bold mb-2 text-center">⚠️ Error</h3>
+      <p className="text-gray-700 text-center">{message}</p>
+
+      <button
+        onClick={() => {
+          if (device?.path) fetchData(device.path, device.timeInterval);
+        }}
+        className="mt-4 w-full py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+      >
+        Retry
+      </button>
     </div>
-  );
+  </div>
+);
+
 
   return (
     <div className="h flex flex-col md:px-6 gap-0 pb-[10px] md:pb-0">

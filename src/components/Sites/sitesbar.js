@@ -261,6 +261,7 @@ export default function Sitesbar() {
             {filteredData.map((data) => (
               <li
                 key={data.siteId}
+                onClick={() => changeLocation(data)}
                 className={`flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-colors ${
                   selectedSiteId === data.siteId
                     ? "bg-indigo-500 text-white"
@@ -268,7 +269,7 @@ export default function Sitesbar() {
                 }`}
               >
                 <span
-                  onClick={() => changeLocation(data)}
+                
                   className="text-sm font-medium truncate flex-1"
                 >
                   {data.name}
