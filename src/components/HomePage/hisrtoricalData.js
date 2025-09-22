@@ -803,13 +803,7 @@ const FinancialBenefits = ({
       bgFrom: "from-emerald-50", bgTo: "to-emerald-100", border: "border-emerald-200",
       icon: <PlugZap className="w-5 h-5 text-emerald-700" />
     },
-    {
-      title: "Export Revenue",
-      value: `₹ ${nf.format(exportINR)}`,
-      line: `${nf.format(exportKwh)} kWh × ₹${exportTariff}/kWh`,
-      bgFrom: "from-blue-50", bgTo: "to-blue-100", border: "border-blue-200",
-      icon: <Sun className="w-5 h-5 text-blue-700" />
-    },
+   
     ...(isPpa ? [{
       title: "PPA Payment",
       value: `₹ ${nf.format(ppaCostINR)}`,
