@@ -153,57 +153,132 @@ const Graph = ({  dataCharts }) => {
     return [0, max + 20];
   };
 
- const changeDate = async () => {
-    if (loading) {
-        setLoading(false);
-    }
-    try {
-        const token = Cookies.get("token");
-        const response = await axios.post(
-            `${process.env.REACT_APP_HOST}/admin/date`,
-            {
-                selectedItem: device?.path || '',
-                date: format(selectedDate, "yyyy-MM-dd"),
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+// ---- Helpers / Constants ----
+const NIGHT_START_MIN = 19 * 60;      // 19:00 -> 1140
+const MORNING_END_MIN = 5 * 60 + 30;  // 05:30 -> 330
+const VOLTAGE_ZERO_EPS = 0;           // e.g., set 0.2 to treat near-zero as zero for solar
+const MIN_AC_VOLTAGE = 50;            // Grid/Inverter clamp threshold
 
-        if (response.status === 200 && response.data?.data?.dataCharts) {
-            const newDataArray = response.data.data.dataCharts.map((chart) => ({
-                ccAxisXValue: formatTick(chart.ccAxisXValue),
-                SolarVoltage: chart.SolarVoltage || 0,
-                SolarCurrent: chart.SolarCurrent || 0,
-                SolarPower: ((chart.SolarCurrent || 0) * (chart.SolarVoltage || 0)).toFixed(2),
-                InverterVoltage: chart.InverterVoltage || 0,
-                InverterCurrent: chart.InverterCurrent || 0,
-                InverterPower: ((chart.InverterCurrent || 0) * (chart.InverterVoltage || 0)).toFixed(2),
-                GridVoltage: chart.GridVoltage || 0,
-                GridCurrent: chart.GridCurrent || 0,
-                GridPower: ((chart.GridCurrent || 0) * (chart.GridVoltage || 0)).toFixed(2),
-                BatteryCurrent: chart.BatteryCurrent || 0,
-                BatteryVoltage: chart.BatteryVoltage || 0,
-                BatteryVoltage2: chart.BatteryVoltage2 || 0,
-                BatteryVoltage3: chart.BatteryVoltage3 || 0,
-                BatteryVoltage4: chart.BatteryVoltage4 || 0,
-                BatteryChargeCurrent: chart.BatteryChrgCurrent || 0,
-                // Fixed: Don't use || 0 which converts negative values to 0
-                BatteryDischargeCurrent: chart.BatteryDisCurrent !== null && chart.BatteryDisCurrent !== undefined 
-                    ? chart.BatteryDisCurrent 
-                    : 0,
-            }));
-           
-            setGraphValues(newDataArray);
-        }
-    } catch (error) {
-        console.error("Error fetching data:", error);
-    } finally {
-        setLoading(false);
+function getMinutesOfDayFromValue(v) {
+  if (typeof v === "number") {
+    const ms = v < 1e12 ? v * 1000 : v; // seconds -> ms if needed
+    const d = new Date(ms);
+    if (!isNaN(d)) return d.getHours() * 60 + d.getMinutes();
+  }
+  if (typeof v === "string") {
+    const iso = new Date(v);
+    if (!isNaN(iso)) return iso.getHours() * 60 + iso.getMinutes();
+    const hhmm = v.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?$/i);
+    if (hhmm) {
+      let h = parseInt(hhmm[1], 10);
+      const m = parseInt(hhmm[2], 10);
+      const ampm = hhmm[3]?.toLowerCase();
+      if (ampm) {
+        if (ampm === "pm" && h < 12) h += 12;
+        if (ampm === "am" && h === 12) h = 0;
+      }
+      if (h >= 0 && h < 24 && m >= 0 && m < 60) return h * 60 + m;
     }
+  }
+  return null; // unknown -> don't modify
+}
+function isNightTime(mins) {
+  if (mins == null) return false;
+  return mins >= NIGHT_START_MIN || mins < MORNING_END_MIN;
+}
+
+// ---- Main ----
+const changeDate = async () => {
+  if (loading) setLoading(false);
+
+  try {
+    const token = Cookies.get("token");
+    const response = await axios.post(
+      `${process.env.REACT_APP_HOST}/admin/date`,
+      {
+        selectedItem: device?.path || "",
+        date: format(selectedDate, "yyyy-MM-dd"),
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (response.status === 200 && response.data?.data?.dataCharts) {
+      const newDataArray = response.data.data.dataCharts.map((chart) => {
+        const minutes = getMinutesOfDayFromValue(chart.ccAxisXValue);
+        const night = isNightTime(minutes);
+
+        // -------- Solar rules --------
+        const rawSolarV = chart.SolarVoltage ?? 0;
+        const rawSolarI = chart.SolarCurrent ?? 0;
+
+        const SolarVoltage = night ? 0 : rawSolarV;
+        let SolarCurrent = night ? 0 : rawSolarI;
+
+        // All-day rule: if solar volts ~ 0, force current = 0
+        if (Math.abs(SolarVoltage) <= VOLTAGE_ZERO_EPS) {
+          SolarCurrent = 0;
+        }
+        const SolarPower = (SolarCurrent * SolarVoltage).toFixed(2);
+
+        // -------- Inverter rules (clamp if V < 50) --------
+        const rawInvV = chart.InverterVoltage ?? 0;
+        const rawInvI = chart.InverterCurrent ?? 0;
+        const invClamped = rawInvV < MIN_AC_VOLTAGE;
+
+        const InverterVoltage = invClamped ? 0 : rawInvV;
+        const InverterCurrent = invClamped ? 0 : rawInvI;
+        const InverterPower = (InverterCurrent * InverterVoltage).toFixed(2);
+
+        // -------- Grid rules (clamp if V < 50) --------
+        const rawGridV = chart.GridVoltage ?? 0;
+        const rawGridI = chart.GridCurrent ?? 0;
+        const gridClamped = rawGridV < MIN_AC_VOLTAGE;
+
+        const GridVoltage = gridClamped ? 0 : rawGridV;
+        const GridCurrent = gridClamped ? 0 : rawGridI;
+        const GridPower = (GridCurrent * GridVoltage).toFixed(2);
+
+        return {
+          ccAxisXValue: formatTick(chart.ccAxisXValue),
+
+          // Solar
+          SolarVoltage,
+          SolarCurrent,
+          SolarPower,
+
+          // Inverter
+          InverterVoltage,
+          InverterCurrent,
+          InverterPower,
+
+          // Grid
+          GridVoltage,
+          GridCurrent,
+          GridPower,
+
+          // Battery (unchanged except preserving negative discharge)
+          BatteryCurrent: chart.BatteryCurrent || 0,
+          BatteryVoltage: chart.BatteryVoltage || 0,
+          BatteryVoltage2: chart.BatteryVoltage2 || 0,
+          BatteryVoltage3: chart.BatteryVoltage3 || 0,
+          BatteryVoltage4: chart.BatteryVoltage4 || 0,
+          BatteryChargeCurrent: chart.BatteryChrgCurrent || 0,
+          BatteryDischargeCurrent:
+            chart.BatteryDisCurrent !== null && chart.BatteryDisCurrent !== undefined
+              ? chart.BatteryDisCurrent
+              : 0,
+        };
+      });
+
+      setGraphValues(newDataArray);
+    }
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  } finally {
+    setLoading(false);
+  }
 };
+
 
   useEffect(() => {
     
