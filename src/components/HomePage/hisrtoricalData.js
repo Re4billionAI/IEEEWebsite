@@ -40,12 +40,14 @@ const SERIES = {
 };
 
 // Environmental factors
-const EF_CO2_KG_PER_KWH = 0.70;
-const TREE_CO2_ABSORB_KG_PER_YEAR = 21.77;
-const KG_STANDARD_COAL_PER_KWH = 0.50;
+const EF_CO2_KG_PER_KWH = 0.75;
+const TREE_CO2_ABSORB_KG_PER_YEAR = 10;
+const KG_STANDARD_COAL_PER_KWH = 0.64;
+
+// India-credible, still simple:
 
 // ---------- Financial constants (tweak as needed) ----------
-const GRID_TARIFF_INR_PER_KWH   = 9.0;   // ₹/kWh avoided when solar serves on-site load
+const GRID_TARIFF_INR_PER_KWH   = 4.0;   // ₹/kWh avoided when solar serves on-site load
 const EXPORT_TARIFF_INR_PER_KWH = 3.0;   // ₹/kWh for export (FiT/net-metering). Set 0 if not applicable.
 const IS_PPA                     = false; // set true if a PPA is used
 const PPA_RATE_INR_PER_KWH       = 0.0;  // ₹/kWh paid to PPA provider when IS_PPA is true
@@ -842,25 +844,9 @@ const FinancialBenefits = ({
           ))}
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="border p-4">
-            <div className="text-sm text-gray-600">Gross Benefit</div>
-            <div className="text-2xl font-semibold">₹ {nf.format(grossBenefitINR)}</div>
-          </div>
-          <div className="border p-4">
-            <div className="text-sm text-gray-600">Net Savings</div>
-            <div className="text-2xl font-semibold">₹ {nf.format(netSavingsINR)}</div>
-          </div>
-          <div className="border p-4">
-            <div className="text-sm text-gray-600">Effective Savings Rate</div>
-            <div className="text-2xl font-semibold">₹ {nf.format(effRateINR)} / kWh</div>
-          </div>
-        </div>
+       
 
-        <div className="text-[11px] font-bold text-gray-900 mt-4">
-          Assumptions: Self-consumption ≈ min(Solar kWh, Load kWh); Export ≈ Solar − Self-consumption.
-          For exact values, use interval (15-min) data to compute simultaneity.
-        </div>
+       
       </div>
     </div>
   );

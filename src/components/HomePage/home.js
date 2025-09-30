@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 import Spinner from "../Loader/loader";
 import { ArrowLeft, Menu } from 'lucide-react';
 import StatusCard from './statusCard';
+import ApplianceStatus from './Appliances';
 
 import Graph from './graphs';
 import { Home, BarChart2, Info } from 'lucide-react'; // or your preferred icon library
@@ -207,6 +208,7 @@ const HomePage = ({ handlePageChange }) => {
                
                  <HistoricalPage generation={energies} isToday={isToday} parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
                   <ParameterRepresentation parameters={liveData.data.snapshot} device={device?.name || 'kollar'} type={device?.type || 'unknown'} />
+                  <ApplianceStatus/>
               </div>
             )}
 

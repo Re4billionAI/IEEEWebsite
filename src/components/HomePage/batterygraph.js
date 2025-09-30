@@ -78,7 +78,7 @@ const BatteryGraph = ({ graphValues }) => {
 
   // Define site-specific parameters
   const getParameters = (siteType, siteName) => {
-    if (siteType === "testing 1") {
+    if (siteType === "testing 1"|| siteName==="Testing2-48v") {
       return [
         { label: "Voltage1", key: "showVoltage1", dataKey: "BatteryVoltage" },
         { label: "Voltage2", key: "showVoltage2", dataKey: "BatteryVoltage2" },
