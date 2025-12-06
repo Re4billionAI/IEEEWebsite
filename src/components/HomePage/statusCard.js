@@ -1,5 +1,3 @@
-
-
 import { useRef, useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import * as XLSX from "xlsx";
@@ -38,23 +36,23 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate,updatedDa
       }
 
       let solarGeneration = 0;
-      let gridEnergy = 0;
+
       let loadConsumption = 0;
 
       newDataArray.forEach((item) => {
         const solarCurrent = parseFloat(item.solarCurrent) || 0;
-        const gridCurrent = parseFloat(item.gridCurrent) || 0;
+
         const inverterCurrent = parseFloat(item.inverterCurrent) || 0;
         const solarVoltage = parseFloat(item.solarVoltage) || 0;
-        const gridVoltage = parseFloat(item.gridVoltage) || 0;
+
         const inverterVoltage = parseFloat(item.inverterVoltage) || 0;
 
         solarGeneration += (solarCurrent * solarVoltage * timeDelta * 60) / (1000 * 3600);
-        gridEnergy += (gridCurrent * gridVoltage * timeDelta * 60) / (1000 * 3600);
+
         loadConsumption += (inverterCurrent * inverterVoltage * timeDelta * 60) / (1000 * 3600);
       });
 
-      updatedEngergies(solarGeneration, gridEnergy, loadConsumption);
+      updatedEngergies(solarGeneration, 0, loadConsumption);
      
     };
 
@@ -63,7 +61,7 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate,updatedDa
   }, [date]);
 
 const istodayfunc= () => {
-  console.log("Checking if date is today:", date);
+  
   const isToday = (dateLike) => {
   const d = new Date(dateLike);
   const now = new Date();
@@ -117,8 +115,6 @@ updatedDateFunction(true)
           solarCurrent: `${chart.SolarCurrent || 0}`,
           inverterVoltage: `${chart.InverterVoltage || 0}`,
           inverterCurrent: `${chart.InverterCurrent || 0}`,
-          gridVoltage: `${chart.GridVoltage || 0}`,
-          gridCurrent: `${chart.GridCurrent || 0}`,
           batteryCurrent: `${chart.BatteryCurrent || 0}`,
           batteryVoltage: `${chart.BatteryVoltage || 0}`,
           batteryVoltage1: `${chart.BatteryVoltage1 || 0}`,
@@ -129,7 +125,7 @@ updatedDateFunction(true)
           BatteryDisCurrent:`${chart.BatteryDisCurrent || 0}`
 
         }));
-        console.log("Fetched data:", newDataArray);
+       
         return { newDataArray };
       }
       return { newDataArray: [] };
@@ -150,7 +146,7 @@ updatedDateFunction(true)
         console.warn("No data fetched for the selected date");
         throw new Error("No data available for the selected date.");
       }
- console.log({"newDataArray":newDataArray})
+ 
       // Validate and transform data
       const data = newDataArray.map((item) => {
         const row = {
@@ -163,10 +159,6 @@ updatedDateFunction(true)
           "IV Unit": "V",
           "Inverter Current": parseFloat(item.inverterCurrent) || 0,
           "IC Unit": "A",
-          "Grid Voltage": parseFloat(item.gridVoltage) || 0,
-          "GV Unit": "V",
-          "Grid Current": parseFloat(item.gridCurrent) || 0,
-          "GC Unit": "A",
           "Battery Current": parseFloat(item.batteryCurrent) || 0,
           "BC Unit": "A",
           "Battery Voltage 1": parseFloat(item.batteryVoltage) || 0,
@@ -186,7 +178,7 @@ updatedDateFunction(true)
         // Validate numeric fields
         const numericFields = [
           "Solar Voltage", "Solar Current", "Inverter Voltage", "Inverter Current",
-          "Grid Voltage", "Grid Current", "Battery Current",
+          "Battery Current",
           "Battery Voltage 1", "Battery Voltage 2", "Battery Voltage 3", "Battery Voltage 4","BatteryChrgCurrent","BatteryDisCurrent"
         ];
         numericFields.forEach((field) => {
@@ -199,23 +191,22 @@ updatedDateFunction(true)
         return row;
       });
 
-      console.log("Transformed data for Excel:", data);
 
       // Calculate energy values
       let solarGeneration = 0;
-      let gridEnergy = 0;
+
       let loadConsumption = 0;
 
       newDataArray.forEach((item) => {
         const solarCurrent = parseFloat(item.solarCurrent) || 0;
-        const gridCurrent = parseFloat(item.gridCurrent) || 0;
+
         const inverterCurrent = parseFloat(item.inverterCurrent) || 0;
         const solarVoltage = parseFloat(item.solarVoltage) || 0;
-        const gridVoltage = parseFloat(item.gridVoltage) || 0;
+
         const inverterVoltage = parseFloat(item.inverterVoltage) || 0;
 
         solarGeneration += (solarCurrent * solarVoltage * timeDelta * 60) / (1000 * 3600);
-        gridEnergy += (gridCurrent * gridVoltage * timeDelta * 60) / (1000 * 3600);
+
         loadConsumption += (inverterCurrent * inverterVoltage * timeDelta * 60) / (1000 * 3600);
       });
 
@@ -227,12 +218,10 @@ updatedDateFunction(true)
         "SV Unit": `${solarGeneration.toFixed(2)} kWh`,
         "Solar Current": "",
         "SC Unit": "",
-        "Inverter Voltage": "Grid Energy:",
-        "IV Unit": `${gridEnergy.toFixed(2)} kWh`,
+        "Inverter Voltage": "Load Consumption:",
+        "IV Unit": `${loadConsumption.toFixed(2)} kWh`,
         "Inverter Current": "",
         "IC Unit": "",
-        "Grid Voltage": "Load Consumption:",
-        "GV Unit": `${loadConsumption.toFixed(2)} kWh`,
       });
 
       // Create workbook and worksheet
@@ -251,10 +240,6 @@ updatedDateFunction(true)
         { wch: 7 }, // IV Unit
         { wch: 15 }, // Inverter Current
         { wch: 7 }, // IC Unit
-        { wch: 12 }, // Grid Voltage
-        { wch: 7 }, // GV Unit
-        { wch: 12 }, // Grid Current
-        { wch: 7 }, // GC Unit
         { wch: 15 }, // Battery Current
         { wch: 7 }, // BC Unit
         { wch: 15 }, // Battery Voltage 1
@@ -279,7 +264,6 @@ updatedDateFunction(true)
       const blob = new Blob([excelBuffer], { type: fileType });
       saveAs(blob, filename);
 
-      console.log(`Excel file saved as: ${filename}`);
     } catch (error) {
       console.error("Error generating Excel file:", error.message);
       if (typeof alert === "function") {

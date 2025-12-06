@@ -11,7 +11,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import debounce from 'lodash.debounce';
 
 // Define the API URL
-const DATA_URL = `${process.env.REACT_APP_HOST}/admin/sitesBriefData`;
+const DATA_URL = `${process.env.REACT_APP_HOST}/admin/IEEEBriefData`;
 
 export default function BrieData({ handlePageChange }) {
   const [data, setData] = useState(null);
@@ -21,7 +21,7 @@ export default function BrieData({ handlePageChange }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'siteName', direction: 'ascending' });
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'active', 'inactive'
-  const [voltageFilter, setVoltageFilter] = useState('all'); // 'all', '24v', '48v'
+  const [voltageFilter, setVoltageFilter] = useState('48v'); // Fixed to show only 48v sites
   const [selectedDate, setSelectedDate] = useState(new Date()); // User-selected date
   const [lastUpdated, setLastUpdated] = useState(null); // Timestamp of last data refresh
 
@@ -224,7 +224,7 @@ export default function BrieData({ handlePageChange }) {
     setError(null);
     setSelectedDate(new Date());
     setSearchTerm('');
-    setVoltageFilter('all');
+    setVoltageFilter('48v'); // Keep 48v filter on reset
     setActiveTab('all');
     fetchData(new Date());
   };
@@ -273,7 +273,6 @@ export default function BrieData({ handlePageChange }) {
       const headers = [
         'Site Name',
         'Solar Energy (kWh)',
-        'Grid Energy (kWh)',
         'Inverter Energy (kWh)',
         'Battery Voltage',
         'Last Update',
@@ -284,7 +283,6 @@ export default function BrieData({ handlePageChange }) {
       const rows = sortedSites.map(site => [
         `"${site.siteName || 'Unknown'}"`,
         site.solarEnergy?.solarEnergy ? parseFloat(site.solarEnergy.solarEnergy).toFixed(2) : 'N/A',
-        site.solarEnergy?.gridEnergy ? parseFloat(site.solarEnergy.gridEnergy).toFixed(2) : 'N/A',
         site.solarEnergy?.inverterEnergy ? parseFloat(site.solarEnergy.inverterEnergy).toFixed(2) : 'N/A',
         site.solarEnergy?.batteryVoltage ? `${parseFloat(site.solarEnergy.batteryVoltage).toFixed(2)} V` : 'N/A',
         site.latestValues?.tValue ? `"${formatDate(site.latestValues.tValue * 1000)}"` : 'N/A',
@@ -469,7 +467,7 @@ export default function BrieData({ handlePageChange }) {
               <div>
                 <h1 className="text-3xl font-bold text-gray-800 flex items-center">
                  
-                  Solar Sites Monitoring Dashboard
+                IEEE solar sites monitoring dashboard
                 </h1>
                
                 {lastUpdated && (
@@ -538,7 +536,7 @@ export default function BrieData({ handlePageChange }) {
           </header>
 
           {/* Dashboard Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6  shadow-md border-l-4 border-blue-500 relative group" title="Total number of monitored solar sites">
               <div className="flex items-center">
                 <div className="bg-blue-100 p-3  mr-4">
@@ -561,17 +559,6 @@ export default function BrieData({ handlePageChange }) {
                 </div>
               </div>
             </div>
-            <div className="bg-white p-6  shadow-md border-l-4 border-red-500 relative group" title="Total grid energy consumed (kWh)">
-              <div className="flex items-center">
-                <div className="bg-red-100 p-3  mr-4">
-                  <Power className="text-red-500" size={24} />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 uppercase">Grid Energy</p>
-                  <p className="text-2xl font-bold">{parseFloat(data?.totalGridEnergy || 0).toFixed(2)} kWh</p>
-                </div>
-              </div>
-            </div>
             <div className="bg-white p-6  shadow-md border-l-4 border-purple-500 relative group" title="Total inverter energy output (kWh)">
               <div className="flex items-center">
                 <div className="bg-purple-100 p-3  mr-4">
@@ -589,35 +576,9 @@ export default function BrieData({ handlePageChange }) {
           <div className="bg-white  shadow-md overflow-hidden mb-8">
             <div className="p-6 border-b">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h2 className="text-xl font-bold">Site Data</h2>
+                <h2 className="text-xl font-bold">48V Site Data</h2>
                 <div className="flex gap-2 items-center flex-wrap">
-                  {/* Voltage Filter Buttons and Search Input */}
-                  <button
-                    onClick={() => setVoltageFilter('all')}
-                    className={`px-4 py-2  flex items-center ${
-                      voltageFilter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setVoltageFilter('24v')}
-                    className={`px-4 py-2  flex items-center ${
-                      voltageFilter === '24v' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    <Battery className="mr-2" size={16} />
-                    24V
-                  </button>
-                  <button
-                    onClick={() => setVoltageFilter('48v')}
-                    className={`px-4 py-2  flex items-center ${
-                      voltageFilter === '48v' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                    }`}
-                  >
-                    <BsBatteryCharging className="mr-2" size={16}/>
-                    48V
-                  </button>
+                  {/* Search Input - Voltage filter removed, showing only 48V sites */}
                   <div className="relative">
                     <input
                       type="text"
@@ -648,10 +609,7 @@ export default function BrieData({ handlePageChange }) {
                     ? 'border-b-2 border-blue-600 text-blue-800' 
                     : 'text-blue-600 hover:text-blue-800'
                 }`}
-                onClick={() => {
-                  setActiveTab('all');
-                  setVoltageFilter('all');
-                }}
+                onClick={() => setActiveTab('all')}
               >
                 All Sites ({counts.total})
               </button>
@@ -708,17 +666,6 @@ export default function BrieData({ handlePageChange }) {
                     </th>
                     <th 
                       className="px-3 py-3 text-center text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 w-1/8"
-                      onClick={() => requestSort('solarEnergy.gridEnergy')}
-                    >
-                      Grid Energy (kWh)
-                      {sortConfig.key === 'solarEnergy.gridEnergy' && (
-                        <span className="ml-2">
-                          {sortConfig.direction === 'ascending' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </th>
-                    <th 
-                      className="px-3 py-3 text-center text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 w-1/8"
                       onClick={() => requestSort('solarEnergy.inverterEnergy')}
                     >
                       load consumption (kWh)
@@ -768,9 +715,6 @@ export default function BrieData({ handlePageChange }) {
 
                           <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                             {site.solarEnergy?.solarEnergy ? parseFloat(site.solarEnergy.solarEnergy).toFixed(2) : 'N/A'}
-                          </td>
-                          <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {site.solarEnergy?.gridEnergy ? parseFloat(site.solarEnergy.gridEnergy).toFixed(2) : 'N/A'}
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                             {site.solarEnergy?.inverterEnergy ? parseFloat(site.solarEnergy.inverterEnergy).toFixed(2) : 'N/A'}

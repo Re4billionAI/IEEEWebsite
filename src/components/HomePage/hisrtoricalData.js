@@ -35,7 +35,6 @@ const COLORS = ["#3b82f6","#10b981","#f59e0b","#ef4444","#8b5cf6","#06b6d4","#84
 
 const SERIES = {
   solar: { key: "solar", label: "Solar", color: "#10b981" },
-  grid:  { key: "grid",  label: "Grid",  color: "#3b82f6" },
   load:  { key: "load",  label: "Load",  color: "#f59e0b" },
 };
 
@@ -317,131 +316,90 @@ const EnergyConsumptionCards = ({ generation, loading: generationLoading,isToday
   return (
     <div className="bg-white border-b-2 border-gray-100">
       <div className="px-8 py-2">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Solar */}
-          <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 p-6">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-emerald-500 p-2 ">
+          <div className="relative overflow-hidden flex flex-col justify-between bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 p-6 rounded-xl shadow-sm h-full">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-emerald-500 p-2 rounded-lg shadow-sm">
                   <Sun className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 leading-tight">Solar Generation</h3>
-                </div>
+                <h3 className="font-semibold text-gray-800 leading-tight">Solar Generation</h3>
               </div>
-
-              {cardLoading || generationLoading ? (
-                <CardLoader/>
-              ) : (
-                <>
-                  <div className="flex items-end gap-3">
-                    <div className="text-3xl font-bold text-emerald-700 tracking-tight">
-                      {Number(data.solargen).toFixed(2)} <span className="text-lg font-medium text-gray-600">kWh</span>
-                    </div>
-                  </div>
-
-                  {isToday && (
-                    <div className="mt-2 text-xs sm:text-sm text-gray-700">
-                      Yesterday: <span className="font-semibold">{nf.format(yesterdaySolarKwh || 0)} kWh</span>
-                    </div>
-                  )}
-                </>
+              {isToday && (
+                 <div className="text-xs font-medium text-emerald-800 bg-emerald-100 px-2 py-1 rounded-md border border-emerald-200">
+                    Yesterday: {nf.format(yesterdaySolarKwh || 0)} kWh
+                 </div>
               )}
             </div>
 
-            {/* Right telemetry */}
-            <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
-              <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
-                <span className="font-semibold">{parameters.solarVoltage.toFixed(2)} V</span>
-                <span className="mx-3">{` ${"|"} `}</span>
-                <span className="font-semibold">{parameters.solarCurrent.toFixed(2)} A</span>
-              </div>
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col justify-center mb-4">
+              {cardLoading || generationLoading ? (
+                <CardLoader/>
+              ) : (
+                <div className="text-4xl font-bold text-emerald-700 tracking-tight">
+                   {Number(data.solargen).toFixed(2)} <span className="text-xl font-medium text-gray-600">kWh</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer / Telemetry */}
+            <div className="flex items-center gap-3 mt-auto">
+               <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-emerald-100 flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Voltage</span>
+                  <span className="font-bold text-emerald-700 text-lg">{parameters.solarVoltage.toFixed(2)} V</span>
+               </div>
+               <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-emerald-100 flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Current</span>
+                  <span className="font-bold text-emerald-700 text-lg">{parameters.solarCurrent.toFixed(2)} A</span>
+               </div>
             </div>
 
             <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-emerald-200/40 blur-2xl"></div>
           </div>
 
-          {/* Grid */}
-          <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-6">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-blue-500 p-2">
-                  <PlugZap className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 leading-tight">Grid Generation</h3>
-                </div>
-              </div>
-
-              {cardLoading || generationLoading ? (
-                <CardLoader/>
-              ) : (
-                <>
-                  <div className="flex items-end gap-3">
-                    <div className="text-3xl font-bold text-blue-700 tracking-tight">
-                      {Number(data.gridgen).toFixed(2)} <span className="text-lg font-medium text-gray-600">kWh</span>
-                    </div>
-                  </div>
-
-                  {isToday && (
-                    <div className="mt-2 text-xs sm:text-sm text-gray-700">
-                      Yesterday: <span className="font-semibold">{nf.format(yesterdayGridKwh || 0)} kWh</span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Right telemetry */}
-            <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
-              <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
-                <span className="font-semibold">{parameters.gridVoltage.toFixed(2)} V</span>
-                <span className="mx-3">{` ${"|"} `}</span>
-                <span className="font-semibold">{parameters.gridCurrent.toFixed(2)} A</span>
-              </div>
-            </div>
-
-            <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48  bg-blue-200/40 blur-2xl"></div>
-          </div>
-
           {/* Load */}
-          <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="bg-orange-500 p-2">
+          <div className="relative overflow-hidden flex flex-col justify-between bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 p-6 rounded-xl shadow-sm h-full">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-500 p-2 rounded-lg shadow-sm">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800 leading-tight">Load Consumption</h3>
-                </div>
+                <h3 className="font-semibold text-gray-800 leading-tight">Load Consumption</h3>
               </div>
-
-              {cardLoading || generationLoading ? (
-                <CardLoader/>
-              ) : (
-                <>
-                  <div className="flex items-end gap-3">
-                    <div className="text-3xl font-bold text-orange-700 tracking-tight">
-                      {Number(data.loadconsumption).toFixed(2)} <span className="text-lg font-medium text-gray-600">kWh</span>
-                    </div>
-                  </div>
-
-                  {isToday && (
-                    <div className="mt-2 text-xs sm:text-sm text-gray-700">
-                      Yesterday: <span className="font-semibold">{nf.format(yesterdayLoadKwh || 0)} kWh</span>
-                    </div>
-                  )}
-                </>
+              {isToday && (
+                 <div className="text-xs font-medium text-orange-800 bg-orange-100 px-2 py-1 rounded-md border border-orange-200">
+                    Yesterday: {nf.format(yesterdayLoadKwh || 0)} kWh
+                 </div>
               )}
             </div>
 
-            {/* Right telemetry */}
-            <div className="flex flex-row items-end justify-center  ml-auto mt-4 sm:mt-0">
-              <div className="bg-white/70 flex flex-row items-center border justify-center   px-3 py-2 sm:px-4 sm:py-3 ">
-                <span className="font-semibold">{parameters.inverterVoltage.toFixed(2)} V</span>
-                <span className="mx-3">{` ${"|"} `}</span>
-                <span className="font-semibold">{parameters.inverterCurrent.toFixed(2)} A</span>
-              </div>
+            {/* Main Content */}
+            <div className="flex-1 flex flex-col justify-center mb-4">
+              {cardLoading || generationLoading ? (
+                <CardLoader/>
+              ) : (
+                <div className="text-4xl font-bold text-orange-700 tracking-tight">
+                   {Number(data.loadconsumption).toFixed(2)} <span className="text-xl font-medium text-gray-600">kWh</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer / Telemetry */}
+            <div className="flex items-center gap-3 mt-auto">
+               <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-orange-100 flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Voltage</span>
+                  <span className="font-bold text-orange-700 text-lg">{parameters.inverterVoltage.toFixed(2)} V</span>
+               </div>
+               <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm border border-orange-100 flex flex-col">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Current</span>
+                  <span className="font-bold text-orange-700 text-lg">{parameters.inverterCurrent.toFixed(2)} A</span>
+               </div>
             </div>
 
             <div className="pointer-events-none absolute -right-10 -bottom-10 w-48 h-48  bg-orange-200/40 blur-2xl"></div>
@@ -491,7 +449,7 @@ const FilterControls = ({
 
         {/* Energy Type */}
         <div className="bg-white border border-gray-300 p-1 ml-2">
-          {["solar","grid","load"].map((k) => (
+          {["solar","load"].map((k) => (
             <button
               key={k}
               className={`px-4 py-2 text-sm font-medium capitalize ${

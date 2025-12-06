@@ -7,7 +7,7 @@ import User from "./components/UserPage"
 import {BrowserRouter, Route, Routes} from "react-router-dom"
 import ProtectedRoute from "../src/components/ProtectedApp/protectedApp"
 
-import Alerts from "./components/Alerts/main"
+
 import Location from "./components/location/main"
 
 
@@ -21,7 +21,7 @@ function App() {
      <Route  element={<ProtectedRoute   extraProps={{name:"Admin"}}/>}>
      <Route exact path="/" element={<Home/>} />
    
-     <Route exact path="/Alerts" element={<Alerts/>} />
+
      <Route exact path="/Location" element={<Location/>} />
      </Route>
 

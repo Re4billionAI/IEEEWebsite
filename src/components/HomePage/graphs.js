@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import Cookies from "js-cookie";
 import { useSelector } from 'react-redux';
 import axios from "axios";
-import { ChevronLeft, ChevronRight,ChevronDown, RefreshCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCcw, Sun, Zap, TrendingUp } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -13,35 +13,35 @@ import {
   Tooltip,
   Brush,
   ResponsiveContainer,
+  Legend,
+  Area,
+  AreaChart,
 } from "recharts";
-import { Maximize2 } from 'lucide-react';
-import { FiX } from "react-icons/fi";
 import BatteryGraph from "./batterygraph";
 
-// Tooltip properties with colors
-const tooltipProps = {
-  "SolarVoltage": { color: "blue" },
-  "SolarCurrent": { color: "green" },
-  "SolarPower": { color: "red" },
-  "InverterVoltage": { color: "blue" },
-  "InverterCurrent": { color: "green" },
-  "InverterPower":  { color: "red" },
-  "GridVoltage": { color: "blue" },
-  "GridCurrent": { color: "green" },
-  "GridPower":  { color: "red" },
+// Enhanced color scheme with distinct colors for each reading
+const chartConfig = {
+  solar: {
+    voltage: { stroke: "#3b82f6", fill: "rgba(59, 130, 246, 0.15)" },    // Blue
+    current: { stroke: "#10b981", fill: "rgba(16, 185, 129, 0.15)" },    // Emerald
+    power: { stroke: "#f59e0b", fill: "rgba(245, 158, 11, 0.15)" },      // Amber
+    theme: "emerald",
+  },
+  inverter: {
+    voltage: { stroke: "#ef4444", fill: "rgba(239, 68, 68, 0.15)" },      // Red
+    current: { stroke: "#06b6d4", fill: "rgba(6, 182, 212, 0.15)" },      // Cyan
+    power: { stroke: "#6366f1", fill: "rgba(99, 102, 241, 0.15)" },       // Indigo
+    theme: "amber",
+  },
 };
 
 const formatTick = (tick) => {
   if (!tick || typeof tick !== 'string') return '';
-  
   const [hourStr, minuteStr] = tick.split(":");
   if (!hourStr || !minuteStr) return tick;
-  
   let hour = parseInt(hourStr, 10);
   let minute = parseInt(minuteStr, 10);
-  
   if (isNaN(hour) || isNaN(minute)) return tick;
-  
   minute = minute < 10 ? `0${minute}` : minuteStr;
   hour = hour < 10 ? `0${hour}` : hour;
   return hour === 24 ? `00:${minute}` : `${hour}:${minute}`;
@@ -54,46 +54,52 @@ const units = {
   InverterVoltage: "V",
   InverterCurrent: "A",
   InverterPower: "W",
-  GridVoltage: "V",
-  GridCurrent: "A",
-  GridPower: "W",
 };
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-gray-300 p-2 rounded-md shadow-sm">
-        <p className="font-semibold">{`Time: ${label}`}</p>
-        {payload.map((item, index) => (
-          <p key={index} style={{ color: item.color }}>
-            {`${item.name}: ${item.value !== undefined ? item.value : 'N/A'} ${units[item.name] || ""}`}
-          </p>
-        ))}
+      <div className="bg-white border-2 border-gray-200 p-4 rounded-xl shadow-xl">
+        <p className="font-bold text-gray-800 mb-2 text-sm">{`Time: ${label}`}</p>
+        <div className="space-y-1.5">
+          {payload.map((item, index) => (
+            <div key={index} className="flex items-center justify-between gap-6">
+              <div className="flex items-center gap-2">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: item.stroke }}
+                />
+                <span className="text-xs text-gray-600 font-medium">{item.name}:</span>
+              </div>
+              <span className="font-bold text-sm" style={{ color: item.stroke }}>
+                {`${item.value !== undefined ? Number(item.value).toFixed(2) : 'N/A'} ${units[item.dataKey] || ""}`}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
   return null;
 };
 
-const parameters = [
-  { label: 'Voltage', key: 'showVoltage', index: 0 },
-  { label: 'Current', key: 'showCurrent', index: 1 },
-  { label: 'Power', key: 'showPower', index: 2 },
-];
-
-const Graph = ({  dataCharts }) => {
-  
+const Graph = ({ dataCharts }) => {
   const device = useSelector((state) => state.location.device);
- 
   const [loading, setLoading] = useState(false);
   const [graphValues, setGraphValues] = useState(dataCharts);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [activeModal, setActiveModal] = useState(null);
-  // Removed Battery from visibility state
-  const [visibility, setVisibility] = useState({
-    Solar: { showVoltage: true, showCurrent: true, showPower: true },
-    Inverter: { showVoltage: true, showCurrent: true, showPower: true },
-    Grid: { showVoltage: true, showCurrent: true, showPower: true },
+  
+  // Visibility state for Solar and Inverter
+  const [solarVisibility, setSolarVisibility] = useState({
+    voltage: true,
+    current: true,
+    power: true,
+  });
+  
+  const [inverterVisibility, setInverterVisibility] = useState({
+    voltage: true,
+    current: true,
+    power: true,
   });
 
   const handleDateChange = (event) => {
@@ -110,423 +116,436 @@ const Graph = ({  dataCharts }) => {
     setSelectedDate(new Date());
   };
 
-  const handleCheckboxChange = useCallback((category, key, checked) => {
-    setVisibility((prev) => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [key]: checked,
-      },
-    }));
-  }, []);
+  // Helper functions
+  const NIGHT_START_MIN = 19 * 60;
+  const MORNING_END_MIN = 5 * 60 + 30;
+  const VOLTAGE_ZERO_EPS = 0;
+  const MIN_AC_VOLTAGE = 50;
 
-  const handleModalToggle = useCallback((category) => {
-    setActiveModal((prev) => (prev === category ? null : category));
-  }, []);
-
-  // Removed Battery from categories
-  const categories = {
-    Solar: ["SolarVoltage", "SolarCurrent", "SolarPower"],
-    Inverter: ["InverterVoltage", "InverterCurrent", "InverterPower"],
-    Grid: ["GridVoltage", "GridCurrent", "GridPower"],
-  };
-
-  const calculateYDomain = (category, keys) => {
-    const activeKeys = keys.filter((key, index) => {
-      if (index === 0) return visibility[category]?.showVoltage;
-      if (index === 1) return visibility[category]?.showCurrent;
-      if (index === 2) return visibility[category]?.showPower;
-      return false;
-    });
-
-    if (activeKeys.length === 0) {
-      return [0, 100];
+  function getMinutesOfDayFromValue(v) {
+    if (typeof v === "number") {
+      const ms = v < 1e12 ? v * 1000 : v;
+      const d = new Date(ms);
+      if (!isNaN(d)) return d.getHours() * 60 + d.getMinutes();
     }
-
-    const values = graphValues.flatMap((data) =>
-      activeKeys.map((key) => data[key] || 0)
-    );
-
-    const min = values.length ? Math.min(...values) : 0;
-    const max = values.length ? Math.max(...values) : 100;
-    
-    return [0, max + 20];
-  };
-
-// ---- Helpers / Constants ----
-const NIGHT_START_MIN = 19 * 60;      // 19:00 -> 1140
-const MORNING_END_MIN = 5 * 60 + 30;  // 05:30 -> 330
-const VOLTAGE_ZERO_EPS = 0;           // e.g., set 0.2 to treat near-zero as zero for solar
-const MIN_AC_VOLTAGE = 50;            // Grid/Inverter clamp threshold
-
-function getMinutesOfDayFromValue(v) {
-  if (typeof v === "number") {
-    const ms = v < 1e12 ? v * 1000 : v; // seconds -> ms if needed
-    const d = new Date(ms);
-    if (!isNaN(d)) return d.getHours() * 60 + d.getMinutes();
-  }
-  if (typeof v === "string") {
-    const iso = new Date(v);
-    if (!isNaN(iso)) return iso.getHours() * 60 + iso.getMinutes();
-    const hhmm = v.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?$/i);
-    if (hhmm) {
-      let h = parseInt(hhmm[1], 10);
-      const m = parseInt(hhmm[2], 10);
-      const ampm = hhmm[3]?.toLowerCase();
-      if (ampm) {
-        if (ampm === "pm" && h < 12) h += 12;
-        if (ampm === "am" && h === 12) h = 0;
-      }
-      if (h >= 0 && h < 24 && m >= 0 && m < 60) return h * 60 + m;
-    }
-  }
-  return null; // unknown -> don't modify
-}
-function isNightTime(mins) {
-  if (mins == null) return false;
-  return mins >= NIGHT_START_MIN || mins < MORNING_END_MIN;
-}
-
-// ---- Main ----
-const changeDate = async () => {
-  if (loading) setLoading(false);
-
-  try {
-    const token = Cookies.get("token");
-    const response = await axios.post(
-      `${process.env.REACT_APP_HOST}/admin/date`,
-      {
-        selectedItem: device?.path || "",
-        date: format(selectedDate, "yyyy-MM-dd"),
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    if (response.status === 200 && response.data?.data?.dataCharts) {
-      const newDataArray = response.data.data.dataCharts.map((chart) => {
-        const minutes = getMinutesOfDayFromValue(chart.ccAxisXValue);
-        const night = isNightTime(minutes);
-
-        // -------- Solar rules --------
-        const rawSolarV = chart.SolarVoltage ?? 0;
-        const rawSolarI = chart.SolarCurrent ?? 0;
-
-        const SolarVoltage = night ? 0 : rawSolarV;
-        let SolarCurrent = night ? 0 : rawSolarI;
-
-        // All-day rule: if solar volts ~ 0, force current = 0
-        if (Math.abs(SolarVoltage) <= VOLTAGE_ZERO_EPS) {
-          SolarCurrent = 0;
+    if (typeof v === "string") {
+      const iso = new Date(v);
+      if (!isNaN(iso)) return iso.getHours() * 60 + iso.getMinutes();
+      const hhmm = v.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(am|pm)?$/i);
+      if (hhmm) {
+        let h = parseInt(hhmm[1], 10);
+        const m = parseInt(hhmm[2], 10);
+        const ampm = hhmm[3]?.toLowerCase();
+        if (ampm) {
+          if (ampm === "pm" && h < 12) h += 12;
+          if (ampm === "am" && h === 12) h = 0;
         }
-        const SolarPower = (SolarCurrent * SolarVoltage).toFixed(2);
-
-        // -------- Inverter rules (clamp if V < 50) --------
-        const rawInvV = chart.InverterVoltage ?? 0;
-        const rawInvI = chart.InverterCurrent ?? 0;
-        const invClamped = rawInvV < MIN_AC_VOLTAGE;
-
-        const InverterVoltage = invClamped ? 0 : rawInvV;
-        const InverterCurrent = invClamped ? 0 : rawInvI;
-        const InverterPower = (InverterCurrent * InverterVoltage).toFixed(2);
-
-        // -------- Grid rules (clamp if V < 50) --------
-        const rawGridV = chart.GridVoltage ?? 0;
-        const rawGridI = chart.GridCurrent ?? 0;
-        const gridClamped = rawGridV < MIN_AC_VOLTAGE;
-
-        const GridVoltage = gridClamped ? 0 : rawGridV;
-        const GridCurrent = gridClamped ? 0 : rawGridI;
-        const GridPower = (GridCurrent * GridVoltage).toFixed(2);
-
-        return {
-          ccAxisXValue: formatTick(chart.ccAxisXValue),
-
-          // Solar
-          SolarVoltage,
-          SolarCurrent,
-          SolarPower,
-
-          // Inverter
-          InverterVoltage,
-          InverterCurrent,
-          InverterPower,
-
-          // Grid
-          GridVoltage,
-          GridCurrent,
-          GridPower,
-
-          // Battery (unchanged except preserving negative discharge)
-          BatteryCurrent: chart.BatteryCurrent || 0,
-          BatteryVoltage: chart.BatteryVoltage || 0,
-          BatteryVoltage2: chart.BatteryVoltage2 || 0,
-          BatteryVoltage3: chart.BatteryVoltage3 || 0,
-          BatteryVoltage4: chart.BatteryVoltage4 || 0,
-          BatteryChargeCurrent: chart.BatteryChrgCurrent || 0,
-          BatteryDischargeCurrent:
-            chart.BatteryDisCurrent !== null && chart.BatteryDisCurrent !== undefined
-              ? chart.BatteryDisCurrent
-              : 0,
-        };
-      });
-
-      setGraphValues(newDataArray);
+        if (h >= 0 && h < 24 && m >= 0 && m < 60) return h * 60 + m;
+      }
     }
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  } finally {
-    setLoading(false);
+    return null;
   }
-};
 
+  function isNightTime(mins) {
+    if (mins == null) return false;
+    return mins >= NIGHT_START_MIN || mins < MORNING_END_MIN;
+  }
+
+  const changeDate = async () => {
+    if (loading) setLoading(false);
+
+    try {
+      const token = Cookies.get("token");
+      const response = await axios.post(
+        `${process.env.REACT_APP_HOST}/admin/date`,
+        {
+          selectedItem: device?.path || "",
+          date: format(selectedDate, "yyyy-MM-dd"),
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200 && response.data?.data?.dataCharts) {
+        const newDataArray = response.data.data.dataCharts.map((chart) => {
+          const minutes = getMinutesOfDayFromValue(chart.ccAxisXValue);
+          const night = isNightTime(minutes);
+
+          const rawSolarV = chart.SolarVoltage ?? 0.00;
+          const rawSolarI = chart.SolarCurrent ?? 0.00;
+
+          const SolarVoltage = night ? 0.00 : rawSolarV;
+          let SolarCurrent = night ? 0.00 : rawSolarI;
+
+          if (Math.abs(SolarVoltage) <= VOLTAGE_ZERO_EPS) {
+            SolarCurrent = 0.00;
+          }
+          const SolarPower = (SolarCurrent * SolarVoltage).toFixed(2);
+
+          const rawInvV = chart.InverterVoltage ?? 0.00;
+          const rawInvI = chart.InverterCurrent ?? 0.00;
+          const invClamped = rawInvV < MIN_AC_VOLTAGE;
+
+          const InverterVoltage = invClamped ? 0.00 : rawInvV;
+          const InverterCurrent = invClamped ? 0.00 : rawInvI;
+          const InverterPower = (InverterCurrent * InverterVoltage).toFixed(2);
+
+          return {
+            ccAxisXValue: formatTick(chart.ccAxisXValue),
+            SolarVoltage,
+            SolarCurrent,
+            SolarPower,
+            InverterVoltage,
+            InverterCurrent,
+            InverterPower,
+            BatteryCurrent: chart.BatteryCurrent || 0.00,
+            BatteryVoltage: chart.BatteryVoltage || 0.00,
+            BatteryVoltage2: chart.BatteryVoltage2 || 0.00,
+            BatteryVoltage3: chart.BatteryVoltage3 || 0.00,
+            BatteryVoltage4: chart.BatteryVoltage4 || 0.00,
+            BatteryChargeCurrent: chart.BatteryChrgCurrent || 0.00,
+            BatteryDischargeCurrent:
+              chart.BatteryDisCurrent !== null && chart.BatteryDisCurrent !== undefined
+                ? chart.BatteryDisCurrent
+                : 0.00,
+          };
+        });
+
+        setGraphValues(newDataArray);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    
-    
     changeDate();
   }, [selectedDate]);
 
+  const toggleSolarVisibility = (key) => {
+    setSolarVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+  
+  const toggleInverterVisibility = (key) => {
+    setInverterVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   return (
-    <div className="m-2">
-      
-      <div className="flex items-center justify-start mb-4 gap-2 p-2 border md:rounded-lg rounded-lg shadow-md bg-gray-100">
-      <div className="md:flex md:flex-row md:justify-between md:items-center gap-2 md:w-[60%] flex flex-col items-center justify-center w-full">
-  <h1 className="text-xl font-semibold text-center md:text-left">{device.name}</h1>
-  <div className="flex items-center gap-4 justify-center">
-    <button
-      onClick={() => handleNavigation("backward")}
-      className="bg-blue-500 p-2 rounded-full hover:bg-blue-600 text-white"
-      aria-label="Previous date"
-    >
-      <ChevronLeft className="w-5 h-5" />
-    </button>
-    <input
-      type="date"
-      value={format(selectedDate, "yyyy-MM-dd")}
-      onChange={handleDateChange}
-      className="p-2 border rounded-lg bg-white text-gray-900"
-      aria-label="Select date"
-    />
-    <button
-      onClick={() => handleNavigation("forward")}
-      className="bg-blue-500 p-2 rounded-full hover:bg-blue-600 text-white"
-      aria-label="Next date"
-    >
-      <ChevronRight className="w-5 h-5" />
-    </button>
-    <button
-      onClick={refreshDate}
-      className="bg-green-500 p-2 rounded-full hover:bg-green-600 text-white"
-      aria-label="Refresh date"
-    >
-      <RefreshCcw className="w-5 h-5" />
-    </button>
-  </div>
-</div>
+    <div className="space-y-6 p-4">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-gray-200 rounded-2xl shadow-sm p-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">{device.name}</h1>
+              <p className="text-sm text-gray-600 mt-0.5">Energy Analytics Dashboard</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleNavigation("backward")}
+              className="bg-white border-2 border-gray-200 p-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-all hover:shadow-md"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <input
+              type="date"
+              value={format(selectedDate, "yyyy-MM-dd")}
+              onChange={handleDateChange}
+              className="px-4 py-2.5 border-2 border-gray-200 rounded-xl bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+            />
+            <button
+              onClick={() => handleNavigation("forward")}
+              className="bg-white border-2 border-gray-200 p-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-all hover:shadow-md"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={refreshDate}
+              className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl hover:from-blue-600 hover:to-indigo-700 text-white transition-all shadow-md hover:shadow-lg"
+            >
+              <RefreshCcw className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center my-4 h-56">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 border-solid"></div>
+        <div className="flex justify-center items-center h-96 bg-white rounded-2xl border-2 border-gray-200">
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
+            <p className="text-gray-600 font-semibold text-lg">Loading analytics...</p>
+          </div>
         </div>
-      ) : (selectedDate > new Date()) ? (
-        <div className="text-center p-4 bg-yellow-100 border border-yellow-300 rounded-lg">
-          <h1 className="text-lg font-semibold">Please select a current or past date</h1>
+      ) : selectedDate > new Date() ? (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl p-8 text-center">
+          <h2 className="text-xl font-bold text-yellow-800">Please select a current or past date</h2>
         </div>
       ) : (
-        <div className="flex flex-wrap justify-between w-full">
-          <BatteryGraph graphValues={graphValues}/>
-          {Object.entries(categories).map(([category, keys]) => {
-            const yDomain = calculateYDomain(category, keys);
-            const categoryVisibility = visibility[category];
+        <div className="space-y-6">
+          <BatteryGraph graphValues={graphValues} />
 
-            return (
-              <div key={category} className="bg-white  rounded-3xl border w-full sm:w-[49%] border-gray-200 overflow-hidden mb-6">
-                
-                <div className="flex justify-between items-center p-4 bg-gray-50 border border-b-gray-300 text-white rounded-t-lg">
-                  <h3 className="md:text-lg text-sm text-black font-bold">{category} Readings</h3>
-                  
-                 <div className="flex justify-between items-center gap-2"> 
-                  <div className="relative group inline-block">
-  {/* Tooltip trigger */}
-  <div className="cursor-pointer px-2 py-1 flex bg-gray-200 text-black rounded-full text-sm">
-     Options <ChevronDown/>
-  </div>
-
-  {/* Tooltip content */}
-  <div className="absolute hidden group-hover:block z-10 mt-0 p-3 bg-white border rounded-lg shadow-lg min-w-[160px] transform -translate-x-14 space-y-3">
-    <div className="flex flex-col gap-1">
-    {parameters.map((param) => {
-                      const dataKey = keys[param.index];
-                      const color = tooltipProps[dataKey].color;
-                      
-                      return (
-                        <button
-                          key={param.key}
-                          onClick={() => handleCheckboxChange(
-                            category, 
-                            param.key, 
-                            !categoryVisibility[param.key]
-                          )}
-                          style={{
-                            backgroundColor: categoryVisibility[param.key] ? color : 'transparent',
-                            border: `2px solid ${categoryVisibility[param.key] ? color : 'black'}`,
-                            color: categoryVisibility[param.key] ? "white" : 'black',
-                          }}
-                          className="md:px-2 px-1 py-1 rounded-full md:text-[12px] text-[10px] font-small transition-colors"
-                        >
-                          {param.label}
-                        </button>
-                      );
-                    })}
-    </div>
-  </div>
-
+          {/* Solar and Inverter Graphs */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Solar Graph */}
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-6 border-b-2 border-orange-100">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-3 rounded-xl shadow-md">
+                      <Sun className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800">Solar Performance</h3>
+                      <p className="text-sm text-gray-600 mt-0.5">Real-time generation metrics</p>
+                    </div>
                   </div>
 
-                  <button 
-                    onClick={() => handleModalToggle(category)}
-                    className="text-gray-600 bg-white md:block hidden rounded-lg border border-gray hover:text-gray-800 p-2 hover:bg-gray-100"
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                  </button></div>
-                </div>
-                <div className="p-0 pb-5 relative z-1">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart
-                      data={graphValues}
-                      margin={{ top: 0, right: 30, left: 0, bottom: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="ccAxisXValue" tickFormatter={formatTick} tick={{ fontSize: 12 }}/>
-                      <YAxis
-                        domain={yDomain}
-                        tickCount={10}
-                        tick={{
-                          fontSize: 12
-                        }}
-                        tickFormatter={(value) =>
-                          new Intl.NumberFormat().format(Math.round(value))
-                        }
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      {categoryVisibility.showVoltage && (
-                        <Line type="monotone" dataKey={keys[0]} stroke={tooltipProps[keys[0]].color} dot={false} />
-                      )}
-                      {categoryVisibility.showCurrent && (
-                        <Line type="monotone" dataKey={keys[1]} stroke={tooltipProps[keys[1]].color} dot={false} />
-                      )}
-                      {categoryVisibility.showPower && (
-                        <Line type="monotone" dataKey={keys[2]} stroke={tooltipProps[keys[2]].color} dot={false} />
-                      )}
-                      <Brush dataKey="ccAxisXValue" height={30} stroke="#007BFF" />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {/* Dropdown Toggle */}
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-orange-200 rounded-xl hover:bg-orange-50 transition-all text-sm font-medium text-gray-700">
+                      <TrendingUp className="w-4 h-4" />
+                      Options
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
+                      <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Toggle Readings</p>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => toggleSolarVisibility('voltage')}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                            solarVisibility.voltage
+                              ? 'text-white shadow-md'
+                              : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                          style={solarVisibility.voltage ? { backgroundColor: chartConfig.solar.voltage.stroke } : {}}
+                        >
+                          Solar Voltage
+                        </button>
+                        <button
+                          onClick={() => toggleSolarVisibility('current')}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                            solarVisibility.current
+                              ? 'text-white shadow-md'
+                              : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                          style={solarVisibility.current ? { backgroundColor: chartConfig.solar.current.stroke } : {}}
+                        >
+                          Solar Current
+                        </button>
+                        <button
+                          onClick={() => toggleSolarVisibility('power')}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                            solarVisibility.power
+                              ? 'text-white shadow-md'
+                              : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                          style={solarVisibility.power ? { backgroundColor: chartConfig.solar.power.stroke } : {}}
+                        >
+                          Solar Power
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            );
-          })}
-
-          {activeModal && (
-            <div className="fixed inset-0 flex items-center justify-center z-10">
-              <div
-                className="absolute inset-0 bg-gray-800 opacity-75"
-                onClick={() => handleModalToggle(null)}
-              ></div>
-              <div className="relative bg-white rounded-lg shadow-xl w-11/12 md:w-3/4">
-                <div className="flex justify-between items-center p-2 gap-2 bg-gray-100 border border-b-gray-300 text-black rounded-t-lg">
-                  <h3 className="md:text-lg text-sm text-black font-bold">{activeModal} Readings</h3>
-                  <div className="flex gap-2">
-                    {parameters.map((param) => {
-                      const dataKey = categories[activeModal][param.index];
-                      const color = tooltipProps[dataKey].color;
-                      
-                      return (
-                        <button
-                          key={param.key}
-                          onClick={() => handleCheckboxChange(
-                            activeModal, 
-                            param.key, 
-                            !visibility[activeModal][param.key]
-                          )}
-                          style={{
-                            backgroundColor: visibility[activeModal][param.key] ? color : 'transparent',
-                            border: `2px solid ${color}`,
-                            color: visibility[activeModal][param.key] ? 'white' : color,
-                          }}
-                          className="md:px-2 px-1 py-1 rounded-full md:text-[12px] text-[10px] font-small transition-colors"
-                        >
-                          {param.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <button
-                    onClick={() => handleModalToggle(null)}
-                    className="text-gray-600 bg-white rounded-lg border border-gray hover:text-gray-800 p-2 hover:bg-gray-100"
-                  >
-                    <FiX size={20} />
-                  </button>
-                </div>
-                
-                <div className="pr-2 bg-white shadow rounded-lg overflow-x-auto">
-                  <div className="p-0 bg-white shadow rounded-lg w-full h-[250px] sm:h-[200px] md:h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={graphValues}
-                        margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
-                        className="bg-gray-50"
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis
-                          dataKey="ccAxisXValue"
-                          tickFormatter={formatTick}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis
-                          domain={calculateYDomain(activeModal, categories[activeModal])}
-                          tickCount={10}
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) =>
-                            new Intl.NumberFormat().format(Math.round(value))
-                          }
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        {visibility[activeModal]?.showVoltage && (
-                          <Line
-                            type="monotone"
-                            dataKey={categories[activeModal][0]}
-                            stroke={tooltipProps[categories[activeModal][0]].color}
-                            dot={false}
-                            className="transition duration-300 hover:opacity-80"
-                          />
-                        )}
-                        {visibility[activeModal]?.showCurrent && (
-                          <Line
-                            type="monotone"
-                            dataKey={categories[activeModal][1]}
-                            stroke={tooltipProps[categories[activeModal][1]].color}
-                            dot={false}
-                            className="transition duration-300 hover:opacity-80"
-                          />
-                        )}
-                        {visibility[activeModal]?.showPower && (
-                          <Line
-                            type="monotone"
-                            dataKey={categories[activeModal][2]}
-                            stroke={tooltipProps[categories[activeModal][2]].color}
-                            dot={false}
-                            className="transition duration-300 hover:opacity-80"
-                          />
-                        )}
-                        <Brush dataKey="ccAxisXValue" height={30} stroke="#007BFF" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+              
+              <div className="p-6 bg-gradient-to-br from-orange-50/30 to-amber-50/30">
+                <ResponsiveContainer width="100%" height={400}>
+                  <AreaChart data={graphValues} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="solarVoltageGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartConfig.solar.voltage.stroke} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={chartConfig.solar.voltage.stroke} stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="solarCurrentGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartConfig.solar.current.stroke} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={chartConfig.solar.current.stroke} stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="solarPowerGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartConfig.solar.power.stroke} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={chartConfig.solar.power.stroke} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" opacity={0.5} />
+                    <XAxis dataKey="ccAxisXValue" tick={{ fontSize: 12, fill: '#6b7280' }} stroke="#9ca3af" />
+                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} stroke="#9ca3af" />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                    {solarVisibility.voltage && (
+                      <Area 
+                        type="monotone" 
+                        dataKey="SolarVoltage" 
+                        stroke={chartConfig.solar.voltage.stroke}
+                        fill="url(#solarVoltageGradient)"
+                        strokeWidth={2.5}
+                        name="Solar Voltage"
+                      />
+                    )}
+                    {solarVisibility.current && (
+                      <Area 
+                        type="monotone" 
+                        dataKey="SolarCurrent" 
+                        stroke={chartConfig.solar.current.stroke}
+                        fill="url(#solarCurrentGradient)"
+                        strokeWidth={2.5}
+                        name="Solar Current"
+                      />
+                    )}
+                    {solarVisibility.power && (
+                      <Area 
+                        type="monotone" 
+                        dataKey="SolarPower" 
+                        stroke={chartConfig.solar.power.stroke}
+                        fill="url(#solarPowerGradient)"
+                        strokeWidth={2.5}
+                        name="Solar Power"
+                      />
+                    )}
+                    <Brush 
+                      dataKey="ccAxisXValue" 
+                      height={35} 
+                      stroke={chartConfig.solar.power.stroke}
+                      fill="rgba(245, 158, 11, 0.1)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          )}
+
+            {/* Inverter Graph */}
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-cyan-50 p-6 border-b-2 border-blue-100">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md">
+                      <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800">Inverter Performance</h3>
+                      <p className="text-sm text-gray-600 mt-0.5">Load consumption metrics</p>
+                    </div>
+                  </div>
+
+                  {/* Dropdown Toggle */}
+                  <div className="relative group">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition-all text-sm font-medium text-gray-700">
+                      <TrendingUp className="w-4 h-4" />
+                      Options
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
+                      <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Toggle Readings</p>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => toggleInverterVisibility('voltage')}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                            inverterVisibility.voltage
+                              ? 'text-white shadow-md'
+                              : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                          style={inverterVisibility.voltage ? { backgroundColor: chartConfig.inverter.voltage.stroke } : {}}
+                        >
+                          Inverter Voltage
+                        </button>
+                        <button
+                          onClick={() => toggleInverterVisibility('current')}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                            inverterVisibility.current
+                              ? 'text-white shadow-md'
+                              : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                          style={inverterVisibility.current ? { backgroundColor: chartConfig.inverter.current.stroke } : {}}
+                        >
+                          Inverter Current
+                        </button>
+                        <button
+                          onClick={() => toggleInverterVisibility('power')}
+                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                            inverterVisibility.power
+                              ? 'text-white shadow-md'
+                              : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
+                          }`}
+                          style={inverterVisibility.power ? { backgroundColor: chartConfig.inverter.power.stroke } : {}}
+                        >
+                          Inverter Power
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 bg-gradient-to-br from-blue-50/30 to-indigo-50/30">
+                <ResponsiveContainer width="100%" height={400}>
+                  <AreaChart data={graphValues} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="inverterVoltageGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartConfig.inverter.voltage.stroke} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={chartConfig.inverter.voltage.stroke} stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="inverterCurrentGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartConfig.inverter.current.stroke} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={chartConfig.inverter.current.stroke} stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="inverterPowerGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartConfig.inverter.power.stroke} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={chartConfig.inverter.power.stroke} stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" opacity={0.5} />
+                    <XAxis dataKey="ccAxisXValue" tick={{ fontSize: 12, fill: '#6b7280' }} stroke="#9ca3af" />
+                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} stroke="#9ca3af" />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                    {inverterVisibility.voltage && (
+                      <Area 
+                        type="monotone" 
+                        dataKey="InverterVoltage" 
+                        stroke={chartConfig.inverter.voltage.stroke}
+                        fill="url(#inverterVoltageGradient)"
+                        strokeWidth={2.5}
+                        name="Inverter Voltage"
+                      />
+                    )}
+                    {inverterVisibility.current && (
+                      <Area 
+                        type="monotone" 
+                        dataKey="InverterCurrent" 
+                        stroke={chartConfig.inverter.current.stroke}
+                        fill="url(#inverterCurrentGradient)"
+                        strokeWidth={2.5}
+                        name="Inverter Current"
+                      />
+                    )}
+                    {inverterVisibility.power && (
+                      <Area 
+                        type="monotone" 
+                        dataKey="InverterPower" 
+                        stroke={chartConfig.inverter.power.stroke}
+                        fill="url(#inverterPowerGradient)"
+                        strokeWidth={2.5}
+                        name="Inverter Power"
+                      />
+                    )}
+                    <Brush 
+                      dataKey="ccAxisXValue" 
+                      height={35} 
+                      stroke={chartConfig.inverter.power.stroke}
+                      fill="rgba(99, 102, 241, 0.1)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
