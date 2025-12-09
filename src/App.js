@@ -9,6 +9,7 @@ import ProtectedRoute from "../src/components/ProtectedApp/protectedApp"
 
 
 import Location from "./components/location/main"
+import Alerts from "./components/Alerts/main"
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
    
 
      <Route exact path="/Location" element={<Location/>} />
+     <Route exact path="/Alerts" element={<Alerts/>} />
      </Route>
 
 {/* User Routes*/}
