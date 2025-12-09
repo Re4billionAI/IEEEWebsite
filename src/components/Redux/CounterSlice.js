@@ -11,7 +11,7 @@ const setCookie = (name, value, days = 30) => {
 };
 
 // ---------- Initial device from cookies ----------
-let parsedGeocode = [12.245914085514979, 79.59611009470636]; // default
+let parsedGeocode = [19.523652, 73.012513]; // default
 try {
   const geoCookie = getCookie('locationGeocode');
   if (geoCookie) parsedGeocode = JSON.parse(geoCookie);
@@ -20,14 +20,14 @@ try {
 }
 
 const initialDevice = {
-  name: getCookie('locationName') || 'Kollar-TN',
-  path: getCookie('locationPath') || 'ftb001',
-  board: getCookie('locationBoard') || 'ftb001',
-  type: getCookie('locationType') || '24v',
+  name: getCookie('locationName') || 'GhayGotha-MH-48V',
+  path: getCookie('locationPath') || 'GhayGotha-MH',
+  board: getCookie('locationBoard') || 'rmsv31_002',
+  type: getCookie('locationType') || '48v',
   geocode: parsedGeocode,
   timeInterval: getCookie('locationTimeInterval') || '5',
-  capacity: getCookie('capacity') || 1,
-  siteId: getCookie('siteId') || 'Kollar-TN-24V-rms35_004',
+  capacity: getCookie('capacity') || 3.27,
+  siteId: getCookie('siteId') || 'MH48V31002',
 };
 
 const initialSpecificPage = getCookie('specificPage') || 'mainPage';
@@ -60,14 +60,18 @@ export const loadLocations = createAsyncThunk(
         capacity: s.capacity ?? 1,
         siteId: s.siteId ?? s.name ?? '',
       });
+      console.log({json})
 
-      return (json.sites || []).map(normalize);
+      // Filter to only include sites where resident or residency is 'IEEE'
+      return (json.sites || [])
+        .filter((s) => s.resident === 'IEEE' || s.residency === 'IEEE')
+        .map(normalize);
     } catch (e) {
       return rejectWithValue(e?.message || 'Network error');
     }
   }
 );
-
+//hi
 // ---------- Slice ----------
 export const locationSlice = createSlice({
   name: 'location',
@@ -150,7 +154,7 @@ export const locationSlice = createSlice({
       });
   },
 });
-//hi
+
 // ---------- Exports ----------
 export const {
   updateLocation,
