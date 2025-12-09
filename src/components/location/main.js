@@ -11,7 +11,7 @@ const Location = () => {
 
         // Append a timestamp to the URL to force reload
         const timestamp = new Date().getTime();
-        setMapUrl(`https://maps.re4billion.ai?cacheBust=${timestamp}`);
+        setMapUrl(`https://main.d17v8r0l0o8h5x.amplifyapp.com/?cacheBust=${timestamp}`);
     }, []);
 
     return (

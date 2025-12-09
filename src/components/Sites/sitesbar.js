@@ -183,7 +183,7 @@ export default function Sitesbar() {
   };
 
   const handleToggleSidebar = () => {
-    // dispatch(toggleSidebar());
+    dispatch(toggleSidebar());
     setShowEditIcons(false);
     setShowAddPopup(false);
     setShowEditPopup(false);
