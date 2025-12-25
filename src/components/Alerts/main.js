@@ -43,7 +43,9 @@ const Alerts = () => {
       );
       const alerts = response.data?.alerts || [];
       
-      const allowedSites = ["KarelaPada-MH-48V", "ghay gotha-48V"];
+      const allowedSites = ["KarelaPada-MH-48V", "ghay gotha-48V","Enam-Pada-1-48V","Kochechapada-MH-48V","Vadpada-MH-48V","Plotpada-1-MH-48V","Plotpada-2-MH-48V" ];
+
+
 
       const formattedAlerts = alerts.map(alert => {
         // Filter Common Issues
