@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit'
 
-import counterReducer from './Redux/CounterSlice'
+import counterReducer from './slices/LocationSlice'
 
 
 export default configureStore({
@@ -12,7 +12,6 @@ export default configureStore({
 })
 
 
-// const additionalData = [
 //   {
 //     "name": "Kollar-TN-24V",
 //     "path": "ftb001",

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import Home from './home';
 
 import { useSelector, useDispatch } from 'react-redux';
-import BrieData from '../BriefData/main';
-import { toggleSpecificPage } from "../Redux/CounterSlice";
+import BrieData from '../../components/BriefData/main';
+import { toggleSpecificPage } from "../../store/slices/LocationSlice";
 import Cookies from 'js-cookie';
 
 const Main = () => {

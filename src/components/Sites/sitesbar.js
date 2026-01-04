@@ -6,7 +6,7 @@ import {
   toggleSpecificPage,
   toggleSidebar,
   loadLocations,
-} from "../Redux/CounterSlice";
+} from "../../store/slices/LocationSlice";
 import { useNavigate, useLocation } from "react-router-dom";
 import Cookies from "js-cookie";
 

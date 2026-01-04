@@ -4,7 +4,7 @@ import { Activity, Sun, Power, Search, Zap, Battery, ChevronLeft, ChevronRight, 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BsBatteryCharging } from "react-icons/bs";
 import Cookies from 'js-cookie';
-import { updateLocation } from '../Redux/CounterSlice';
+import { updateLocation } from '../../store/slices/LocationSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';

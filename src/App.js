@@ -1,15 +1,15 @@
 
-import Home from "./components/HomePage/main"
-import Login from "./components/LoginPage"
-import NotFound from "./components/NotFoundPage"
-import User from "./components/UserPage"
+import Home from "./pages/Dashboard/main"
+import Login from "./pages/Login"
+import NotFound from "./pages/NotFound"
+import User from "./pages/User"
 
 import {BrowserRouter, Route, Routes} from "react-router-dom"
-import ProtectedRoute from "../src/components/ProtectedApp/protectedApp"
+import ProtectedRoute from "./components/ProtectedApp/protectedApp"
 
 
-import Location from "./components/location/main"
-import Alerts from "./components/Alerts/main"
+import Location from "./pages/Location/main"
+import Alerts from "./pages/Alerts/main"
 
 
 function App() {

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, Search, LogOut } from "lucide-react";
 import { useSelector, useDispatch } from 'react-redux'
-import { updateLocation, toggleSidebar } from "../Redux/CounterSlice"
-import { toggleSpecificPage, setSpecificPage } from "../Redux/CounterSlice"
+import { updateLocation, toggleSidebar } from "../../store/slices/LocationSlice"
+import { toggleSpecificPage, setSpecificPage } from "../../store/slices/LocationSlice"
 
 
 import { useNavigate } from "react-router-dom";

@@ -16,6 +16,7 @@
     "echarts": "^6.0.0",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
+    "firebase": "^12.7.0",
     "framer-motion": "^12.0.5",
     "html2canvas": "^1.4.1",
     "icons": "^1.0.0",
@@ -61,10 +62,14 @@
     ]
   },
   "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.20",
     "css-loader": "^7.1.2",
     "postcss": "^8.5.3",
     "postcss-loader": "^8.1.1",
-    "tailwindcss": "^4.0.7"
+    "tailwindcss": "^4.0.7",
+    "typescript": "^5.9.3"
   }
 }
