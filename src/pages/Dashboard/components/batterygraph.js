@@ -113,15 +113,7 @@ const BatteryGraph = ({ graphValues }) => {
         { label: "Charge Current", key: "showChrgCurrent", dataKey: "BatteryChargeCurrent" },
         { label: "Discharge Current", key: "showDisCurrent", dataKey: "BatteryDischargeCurrent" },
       ];
-    }else if ( siteName === "KarelaPada-MH-48V" || siteName === "GhayGotha-MH-48V") {
-      return [
-        { label: "Voltage 1", key: "showVoltage", dataKey: "BatteryVoltage" },
-        { label: "Voltage 2", key: "showVoltage2", dataKey: "BatteryVoltage2" },
-        { label: "Voltage 3", key: "showVoltage3", dataKey: "BatteryVoltage3" },
-        { label: "Voltage 4", key: "showVoltage4", dataKey: "BatteryVoltage4" },
-        { label: "Current", key: "showCurrent", dataKey: "BatteryCurrent" },
-      ];
-    }else if (siteType === "48v"&& (siteName !== "KarelaPada-MH"|| siteName !== "GhayGotha-MH")) {
+    }else if (siteType === "48v") {
       return [
         { label: "Voltage 1", key: "showVoltage", dataKey: "BatteryVoltage" },
         { label: "Voltage 2", key: "showVoltage2", dataKey: "BatteryVoltage2" },
