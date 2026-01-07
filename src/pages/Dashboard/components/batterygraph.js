@@ -60,7 +60,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border-2 border-gray-200 p-4 rounded-xl shadow-xl">
+      <div className="bg-white border-2 border-gray-200 p-4 shadow-xl">
         <p className="font-bold text-gray-800 mb-2 text-sm">{`Time: ${label}`}</p>
         <div className="space-y-1.5">
           {payload.map((item, index) => (
@@ -206,11 +206,11 @@ const BatteryGraph = ({ graphValues }) => {
   );
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden w-full">
+    <div className="bg-white border-2 border-gray-200 shadow-lg overflow-hidden w-full">
       <div className="bg-gradient-to-r from-emerald-50 via-green-50 to-teal-50 p-6 border-b-2 border-emerald-100">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-xl shadow-md">
+            <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 shadow-md">
               <Battery className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -221,13 +221,13 @@ const BatteryGraph = ({ graphValues }) => {
 
           {/* Dropdown Toggle */}
           <div className="relative group">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-emerald-200 rounded-xl hover:bg-emerald-50 transition-all text-sm font-medium text-gray-700">
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-emerald-200 hover:bg-emerald-50 transition-all text-sm font-medium text-gray-700">
               <TrendingUp className="w-4 h-4" />
               Options
             </button>
             
             {/* Dropdown Menu */}
-            <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
+            <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
               <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Toggle Readings</p>
               <div className="flex flex-col gap-2">
                 {parameters.map(param => {
@@ -237,7 +237,7 @@ const BatteryGraph = ({ graphValues }) => {
                     <button
                       key={param.key}
                       onClick={() => handleCheckboxChange("Battery", param.key, !isActive)}
-                      className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                      className={`px-3 py-2 text-xs font-medium transition-all text-left ${
                         isActive
                           ? 'text-white shadow-md'
                           : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'

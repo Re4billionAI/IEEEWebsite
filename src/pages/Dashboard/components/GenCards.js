@@ -17,6 +17,7 @@ const EnergyConsumptionCards = ({ generation, loading, parameters }) => {
   return (
     <div className="bg-white border-b-2 border-gray-100 ">
       <div className="px-4 py-4">
+        <h1 className="text-2xl font-bold pb-2">Energy Consumption</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Solar */}
           <div className="relative overflow-hidden flex flex-row bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 p-6">

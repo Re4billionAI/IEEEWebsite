@@ -59,7 +59,7 @@ const units = {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border-2 border-gray-200 p-4 rounded-xl shadow-xl">
+      <div className="bg-white border-2 border-gray-200 p-4 shadow-xl">
         <p className="font-bold text-gray-800 mb-2 text-sm">{`Time: ${label}`}</p>
         <div className="space-y-1.5">
           {payload.map((item, index) => (
@@ -234,10 +234,10 @@ const Graph = ({ dataCharts }) => {
   return (
     <div className="space-y-6 p-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-gray-200 rounded-2xl shadow-sm p-6">
+      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-gray-200 shadow-sm p-6">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md">
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 shadow-md">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -249,7 +249,7 @@ const Graph = ({ dataCharts }) => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleNavigation("backward")}
-              className="bg-white border-2 border-gray-200 p-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-all hover:shadow-md"
+              className="bg-white border-2 border-gray-200 p-2.5 hover:bg-gray-50 text-gray-700 transition-all hover:shadow-md"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -257,17 +257,17 @@ const Graph = ({ dataCharts }) => {
               type="date"
               value={format(selectedDate, "yyyy-MM-dd")}
               onChange={handleDateChange}
-              className="px-4 py-2.5 border-2 border-gray-200 rounded-xl bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+              className="px-4 py-2.5 border-2 border-gray-200 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
             />
             <button
               onClick={() => handleNavigation("forward")}
-              className="bg-white border-2 border-gray-200 p-2.5 rounded-xl hover:bg-gray-50 text-gray-700 transition-all hover:shadow-md"
+              className="bg-white border-2 border-gray-200 p-2.5 hover:bg-gray-50 text-gray-700 transition-all hover:shadow-md"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
             <button
               onClick={refreshDate}
-              className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 rounded-xl hover:from-blue-600 hover:to-indigo-700 text-white transition-all shadow-md hover:shadow-lg"
+              className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5 hover:from-blue-600 hover:to-indigo-700 text-white transition-all shadow-md hover:shadow-lg"
             >
               <RefreshCcw className="w-5 h-5" />
             </button>
@@ -276,14 +276,14 @@ const Graph = ({ dataCharts }) => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-96 bg-white rounded-2xl border-2 border-gray-200">
+        <div className="flex justify-center items-center h-96 bg-white border-2 border-gray-200">
           <div className="flex flex-col items-center gap-4">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent"></div>
             <p className="text-gray-600 font-semibold text-lg">Loading analytics...</p>
           </div>
         </div>
       ) : selectedDate > new Date() ? (
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-2xl p-8 text-center">
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-300 p-8 text-center">
           <h2 className="text-xl font-bold text-yellow-800">Please select a current or past date</h2>
         </div>
       ) : (
@@ -293,11 +293,11 @@ const Graph = ({ dataCharts }) => {
           {/* Solar and Inverter Graphs */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Solar Graph */}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+            <div className="bg-white border-2 border-gray-200 shadow-lg overflow-hidden">
               <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 p-6 border-b-2 border-orange-100">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-3 rounded-xl shadow-md">
+                    <div className="bg-gradient-to-br from-orange-500 to-amber-600 p-3 shadow-md">
                       <Sun className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -308,18 +308,18 @@ const Graph = ({ dataCharts }) => {
 
                   {/* Dropdown Toggle */}
                   <div className="relative group">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-orange-200 rounded-xl hover:bg-orange-50 transition-all text-sm font-medium text-gray-700">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-orange-200 hover:bg-orange-50 transition-all text-sm font-medium text-gray-700">
                       <TrendingUp className="w-4 h-4" />
                       Options
                     </button>
                     
                     {/* Dropdown Menu */}
-                    <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
+                    <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
                       <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Toggle Readings</p>
                       <div className="flex flex-col gap-2">
                         <button
                           onClick={() => toggleSolarVisibility('voltage')}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                          className={`px-3 py-2 text-xs font-medium transition-all text-left ${
                             solarVisibility.voltage
                               ? 'text-white shadow-md'
                               : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
@@ -330,7 +330,7 @@ const Graph = ({ dataCharts }) => {
                         </button>
                         <button
                           onClick={() => toggleSolarVisibility('current')}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                          className={`px-3 py-2 text-xs font-medium transition-all text-left ${
                             solarVisibility.current
                               ? 'text-white shadow-md'
                               : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
@@ -341,7 +341,7 @@ const Graph = ({ dataCharts }) => {
                         </button>
                         <button
                           onClick={() => toggleSolarVisibility('power')}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                          className={`px-3 py-2 text-xs font-medium transition-all text-left ${
                             solarVisibility.power
                               ? 'text-white shadow-md'
                               : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
@@ -420,11 +420,11 @@ const Graph = ({ dataCharts }) => {
             </div>
 
             {/* Inverter Graph */}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+            <div className="bg-white border-2 border-gray-200 shadow-lg overflow-hidden">
               <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-cyan-50 p-6 border-b-2 border-blue-100">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 rounded-xl shadow-md">
+                    <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-3 shadow-md">
                       <Zap className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -435,18 +435,18 @@ const Graph = ({ dataCharts }) => {
 
                   {/* Dropdown Toggle */}
                   <div className="relative group">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition-all text-sm font-medium text-gray-700">
+                    <button className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-blue-200 hover:bg-blue-50 transition-all text-sm font-medium text-gray-700">
                       <TrendingUp className="w-4 h-4" />
                       Options
                     </button>
                     
                     {/* Dropdown Menu */}
-                    <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
+                    <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 p-3">
                       <p className="text-xs font-semibold text-gray-500 mb-2 uppercase">Toggle Readings</p>
                       <div className="flex flex-col gap-2">
                         <button
                           onClick={() => toggleInverterVisibility('voltage')}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                          className={`px-3 py-2 text-xs font-medium transition-all text-left ${
                             inverterVisibility.voltage
                               ? 'text-white shadow-md'
                               : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
@@ -457,7 +457,7 @@ const Graph = ({ dataCharts }) => {
                         </button>
                         <button
                           onClick={() => toggleInverterVisibility('current')}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                          className={`px-3 py-2 text-xs font-medium transition-all text-left ${
                             inverterVisibility.current
                               ? 'text-white shadow-md'
                               : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'
@@ -468,7 +468,7 @@ const Graph = ({ dataCharts }) => {
                         </button>
                         <button
                           onClick={() => toggleInverterVisibility('power')}
-                          className={`px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                          className={`px-3 py-2 text-xs font-medium transition-all text-left ${
                             inverterVisibility.power
                               ? 'text-white shadow-md'
                               : 'bg-gray-50 text-gray-700 border border-gray-300 hover:bg-gray-100'

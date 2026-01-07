@@ -226,7 +226,7 @@ export default function HistoryDashboard({ siteId }: { siteId: string }) {
 
     // Insight Card Component
     const InsightCard = ({ title, value, unit, icon: Icon, colorClass }: any) => (
-        <div className="bg-white p-5 flex items-center gap-4">
+        <div className="bg-white p-2 flex items-center gap-4">
             <div className={`p-3 rounded-full ${colorClass}`}>
                 <Icon size={24} />
             </div>
