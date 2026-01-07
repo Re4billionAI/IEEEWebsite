@@ -10,6 +10,8 @@ import {
   Thermometer,
   CheckCircle,
   CircleAlert,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 
@@ -20,8 +22,9 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, date, se
   const devicelocation = useSelector((state) => state.location.device);
   const timeDelta = devicelocation?.timeInterval || 5;
 
+
   // Use the lastupdate prop if available
-  const lasttime = lastupdate ? new Date(lastupdate * 1000) : new Date();
+  const lasttime = lastupdate ? new Date(lastupdate * 1000) : "N/A";
 
   // Handle Export based on PASSED chartData (from parent)
   const handlePrint = async (e) => {
@@ -141,18 +144,42 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, date, se
             </div>
 
             <div className="flex gap-3 items-center w-full sm:w-auto">
-              <input
-                type="date"
-                ref={dateInputRef}
-                value={format(date, "yyyy-MM-dd")}
-                onChange={(e) => setDate(new Date(e.target.value))}
-                max={format(new Date(), "yyyy-MM-dd")} 
-                className="border border-gray-300 text-sm px-3 py-2 w-full sm:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="flex items-center rounded-md border border-gray-300 shadow-sm">
+                <button 
+                  onClick={() => {
+                    const prev = new Date(date);
+                    prev.setDate(prev.getDate() - 1);
+                    setDate(prev);
+                  }}
+                  className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 border-r border-gray-300 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <input
+                  type="date"
+                  ref={dateInputRef}
+                  value={format(date, "yyyy-MM-dd")}
+                  onChange={(e) => setDate(new Date(e.target.value))}
+                  max={format(new Date(), "yyyy-MM-dd")} 
+                  className="text-sm px-3 py-2 w-32 sm:w-36 focus:outline-none text-center"
+                />
+                <button 
+                  onClick={() => {
+                    const next = new Date(date);
+                    next.setDate(next.getDate() + 1);
+                    if (next <= new Date()) setDate(next);
+                  }}
+                  disabled={new Date(date).toDateString() === new Date().toDateString()}
+                  className="px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 border-l border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
               <button
                 onClick={handlePrint}
                 disabled={isLoading}
-                className={`flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 ${
+                className={`flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-md shadow-sm ${
                   isLoading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
@@ -164,11 +191,11 @@ const CoolingSystemCard = ({ device, alert, type, capacity, lastupdate, date, se
 
           {/* Alert Status */}
           {alert !== "success" ? (
-            <button className="flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 text-sm shadow-md max-w-fit mr-auto">
+            <button className="flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 text-sm shadow-md max-w-fit mr-auto rounded-md cursor-default">
               <CircleAlert className="w-4 h-4" /> Offline
             </button>
           ) : (
-            <button className="flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2 text-sm shadow-md max-w-fit mr-auto">
+            <button className="flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2 text-sm shadow-md max-w-fit mr-auto rounded-md cursor-default">
               <CheckCircle className="w-4 h-4" /> Online
             </button>
           )}

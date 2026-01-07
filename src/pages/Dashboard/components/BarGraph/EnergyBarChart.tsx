@@ -17,6 +17,25 @@ interface EnergyBarChartProps {
 }
 
 const EnergyBarChart: React.FC<EnergyBarChartProps> = ({ data, metric }) => {
+
+    // Custom Tooltip
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            const dataPoint = payload[0].payload;
+            return (
+                <div className="bg-white p-3 border border-gray-200 shadow-lg rounded-lg">
+                    <p className="text-gray-500 text-xs mb-1">{dataPoint.fullDate || `Day ${label}`}</p>
+                    <p className="text-gray-800 font-bold text-sm">
+                        {payload[0].value !== null && payload[0].value !== undefined
+                            ? `${Number(payload[0].value).toFixed(2)} kWh`
+                            : 'N/A'}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <div className="w-full h-[500px] bg-white p-4  shadow-sm border border-gray-100 mt-0 pt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -39,15 +58,7 @@ const EnergyBarChart: React.FC<EnergyBarChartProps> = ({ data, metric }) => {
                         tick={{ fill: '#6b7280' }}
                         axisLine={{ stroke: '#e5e7eb' }}
                     />
-                    <Tooltip
-                        cursor={{ fill: '#f3f4f6' }}
-                        contentStyle={{
-                            backgroundColor: '#fff',
-                            borderRadius: '8px',
-                            border: '1px solid #e5e7eb',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                        }}
-                    />
+                    <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6' }} />
                     <Legend />
                     <Bar
                         dataKey="value"
@@ -58,7 +69,7 @@ const EnergyBarChart: React.FC<EnergyBarChartProps> = ({ data, metric }) => {
                                     '#f59e0b'
                         }
                         radius={[4, 4, 0, 0]}
-                        barSize={40}
+                        barSize={20}
                     />
                 </BarChart>
             </ResponsiveContainer>

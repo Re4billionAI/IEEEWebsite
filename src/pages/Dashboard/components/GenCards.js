@@ -4,9 +4,9 @@ import { Loader2, Sun, Zap } from "lucide-react";
 
 // Simplified component - no internal state, just props
 const EnergyConsumptionCards = ({ generation, loading, parameters }) => {
-  // Use passed generation data or default to 0
-  const solargen = generation?.solargen || 0;
-  const loadconsumption = generation?.loadconsumption || 0;
+  // Use passed generation data
+  const solargen = generation?.solargen;
+  const loadconsumption = generation?.loadconsumption;
 
   const CardLoader = () => (
     <div className="flex items-center justify-center h-16">
@@ -36,7 +36,10 @@ const EnergyConsumptionCards = ({ generation, loading, parameters }) => {
                 <>
                   <div className="flex items-end gap-3">
                     <div className="text-3xl font-bold text-emerald-700 tracking-tight">
-                      {solargen} <span className="text-lg font-medium text-gray-600">kWh</span>
+                      {solargen !== undefined && solargen !== null 
+                        ? (typeof solargen === 'number' ? solargen.toFixed(2) : solargen)
+                        : "N/A"
+                      } <span className="text-lg font-medium text-gray-600">{solargen !== undefined && solargen !== null ? "kWh" : ""}</span>
                     </div>
                   </div>
                 </>
@@ -73,7 +76,10 @@ const EnergyConsumptionCards = ({ generation, loading, parameters }) => {
                 <>
                   <div className="flex items-end gap-3">
                     <div className="text-3xl font-bold text-orange-700 tracking-tight">
-                      {loadconsumption} <span className="text-lg font-medium text-gray-600">kWh</span>
+                    {loadconsumption !== undefined && loadconsumption !== null 
+                        ? (typeof loadconsumption === 'number' ? loadconsumption.toFixed(2) : loadconsumption)
+                        : "N/A"
+                      } <span className="text-lg font-medium text-gray-600">{loadconsumption !== undefined && loadconsumption !== null ? "kWh" : ""}</span>
                     </div>
                   </div>
                 </>
